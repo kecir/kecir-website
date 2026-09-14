@@ -1,0 +1,67 @@
+.center {
+	margin: auto;
+	width: 60%;
+	padding: 6px;
+	text-align: center;
+}
+a:link { text-decoration: none; color: black}
+a:visited { text-decoration: none; color: black}
+a:hover { text-decoration: none; color: black}
+
+.navbar{font-weight: bold;}
+
+a:active {text-decoration: none;}
+
+.maincenter {
+	font-family: 'candara';
+	margin: auto;
+	width: 60%;
+}
+hr{
+	border-top: 1px solid black;
+	width: 80%;
+}
+ul {
+  list-style-type: none;
+}
+li {
+  display: inline;		
+	margin: 5px;
+	cursor: pointer;
+}
+li:hover{color:red; }
+.container{
+	margin: auto;
+	width: 60%;
+}
+@font-face {font-family: "optima"; src: url("optima/fonts/optima.ttf");}
+@font-face {font-family: "candara";	src: url("candara/fonts/candara.ttf");}
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: black;
+  color: white;
+  text-align: center;
+	font-variant: small-caps;
+}
+
+/*
+img{border-radius: 10%}
+*/
+
+h1{font-size: larger;margin-bottom: 0;margin-top: 0; padding-top: 0}
+h2{font-size: large;margin-bottom: 0}
+p{text-align: justify;margin-top: 0}
+.p1{text-align: left}
+
+.row{display: flex}
+.column_small{flex: 33.33%; padding: 10px;}
+.column_double{flex: 66.67%; padding:10px; padding-top:0px;margin-top: 0px;}
+
+.sc{font-variant: small-caps;}
+
+#Pop {
+  display: block
+}
