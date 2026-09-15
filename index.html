@@ -2,6 +2,22 @@
 <html>
 
 	<head>
+    <style>
+      @keyframes construct-walk-across {
+        from { transform: translateX(0); }
+        to { transform: translateX(calc(-100vw - 64px)); }
+      }
+
+      .construct-walker {
+        position: fixed;
+        right: -64px;
+        bottom: 0;
+        width: 64px;
+        height: 64px;
+        animation: construct-walk-across 16s linear infinite;
+        pointer-events: none;
+      }
+    </style>
   </head>
 
   <body>
@@ -9,6 +25,7 @@
 	<meta charset="utf-8">
 	La semplicit&agrave; &egrave; l'ultima sofisticazione. &mdash; Clare Boothe Luce
 	</center>
+	<img class="construct-walker" src="img/construct_w.gif" alt="">
 
   </body>
 	
