@@ -3,9 +3,34 @@
 
 	<head>
     <style>
-      @keyframes construct-walk-across {
-        from { transform: translateX(0); }
-        to { transform: translateX(calc(-100vw - 64px)); }
+      @keyframes construct-walk-west {
+        0%, 50% {
+          opacity: 0;
+          transform: translateX(calc(-100vw - 64px));
+        }
+        50.01% {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(calc(-100vw - 64px));
+        }
+      }
+
+      @keyframes construct-walk-east {
+        0% {
+          opacity: 1;
+          transform: translateX(calc(-100vw - 64px));
+        }
+        49.99% {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        50%, 100% {
+          opacity: 0;
+          transform: translateX(0);
+        }
       }
 
       .construct-walker {
@@ -14,8 +39,42 @@
         bottom: 0;
         width: 64px;
         height: 64px;
-        animation: construct-walk-across 16s linear infinite;
+        animation-duration: 32s;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
         pointer-events: none;
+        z-index: 2;
+      }
+
+      .high-speed-train {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 128px;
+        background: url("img/high-speed-train.png") right bottom / cover no-repeat;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .construction-path {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 128px;
+        background: url("img/construction-site.png") right bottom / cover no-repeat;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .construct-walker--west { animation-name: construct-walk-west; }
+
+      .construct-walker--east {
+        bottom: 8px;
+        width: 48px;
+        height: 48px;
+        animation-name: construct-walk-east;
       }
     </style>
   </head>
@@ -25,7 +84,10 @@
 	<meta charset="utf-8">
 	La semplicit&agrave; &egrave; l'ultima sofisticazione. &mdash; Clare Boothe Luce
 	</center>
-	<img class="construct-walker" src="img/construct_w.gif" alt="">
+	<div class="high-speed-train" aria-hidden="true"></div>
+	<div class="construction-path" aria-hidden="true"></div>
+	<img class="construct-walker construct-walker--west" src="img/construct_w.gif" alt="">
+	<img class="construct-walker construct-walker--east" src="img/construct_e.gif" alt="">
 
   </body>
 	
