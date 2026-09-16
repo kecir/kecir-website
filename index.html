@@ -6,7 +6,7 @@
       @keyframes construct-walk-west {
         0%, 50% {
           opacity: 0;
-          transform: translateX(calc(-100vw - 64px));
+          transform: translateX(calc(-100vw - 48px));
         }
         50.01% {
           opacity: 1;
@@ -14,14 +14,14 @@
         }
         100% {
           opacity: 1;
-          transform: translateX(calc(-100vw - 64px));
+          transform: translateX(calc(-100vw - 48px));
         }
       }
 
       @keyframes construct-walk-east {
         0% {
           opacity: 1;
-          transform: translateX(calc(-100vw - 64px));
+          transform: translateX(calc(-100vw - 48px));
         }
         49.99% {
           opacity: 1;
@@ -35,10 +35,10 @@
 
       .construct-walker {
         position: fixed;
-        right: -64px;
-        bottom: 0;
-        width: 64px;
-        height: 64px;
+        right: -48px;
+        bottom: 8px;
+        width: 48px;
+        height: 48px;
         animation-duration: 32s;
         animation-timing-function: linear;
         animation-iteration-count: infinite;
@@ -71,9 +71,6 @@
       .construct-walker--west { animation-name: construct-walk-west; }
 
       .construct-walker--east {
-        bottom: 8px;
-        width: 48px;
-        height: 48px;
         animation-name: construct-walk-east;
       }
     </style>
