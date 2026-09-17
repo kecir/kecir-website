@@ -33,6 +33,11 @@
         }
       }
 
+      @keyframes construct-steps {
+        from { background-position: 0 0; }
+        to { background-position: -288px 0; }
+      }
+
       .construct-walker {
         position: fixed;
         right: -48px;
@@ -44,6 +49,25 @@
         animation-iteration-count: infinite;
         pointer-events: none;
         z-index: 2;
+      }
+
+      /* CSS frame playback avoids Safari's offscreen GIF suspension. */
+      .construct-walker::before {
+        content: "";
+        display: block;
+        width: 48px;
+        height: 48px;
+        background-repeat: no-repeat;
+        background-size: 288px 48px;
+        animation: construct-steps 1.2s steps(6) infinite;
+      }
+
+      .construct-walker--west::before {
+        background-image: url("img/construct_w.png");
+      }
+
+      .construct-walker--east::before {
+        background-image: url("img/construct_e.png");
       }
 
       .high-speed-train {
@@ -83,8 +107,8 @@
 	</center>
 	<div class="high-speed-train" aria-hidden="true"></div>
 	<div class="construction-path" aria-hidden="true"></div>
-	<img class="construct-walker construct-walker--west" src="img/construct_w.gif" alt="">
-	<img class="construct-walker construct-walker--east" src="img/construct_e.gif" alt="">
+	<div class="construct-walker construct-walker--west" aria-hidden="true"></div>
+	<div class="construct-walker construct-walker--east" aria-hidden="true"></div>
 
   </body>
 	
