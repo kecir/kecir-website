@@ -2,7 +2,11 @@
 var $=function(id){return document.getElementById(id);};
 // Fonts load asynchronously so a slow font request can never delay or block the animation
 var fl0=document.createElement('link');fl0.rel='stylesheet';fl0.href='https://fonts.googleapis.com/css2?family=Alegreya+Sans+SC:wght@500&family=Alegreya+Sans:wght@500&family=IBM+Plex+Mono:wght@400;500&display=swap';document.head.appendChild(fl0);
-var W=240,H=200;
+var matrix=document.getElementById('matrix'),mctx=matrix.getContext('2d'),drops=[],fontSize=16;
+function resizeMatrix(){var dpr=Math.min(window.devicePixelRatio||1,2);matrix.width=Math.floor(innerWidth*dpr);matrix.height=Math.floor(innerHeight*dpr);mctx.setTransform(dpr,0,0,dpr,0,0);var cols=Math.ceil(innerWidth/fontSize);drops=Array.from({length:cols},function(){return Math.random()*innerHeight/fontSize;});}
+function drawMatrix(){mctx.fillStyle='rgba(3,10,5,.09)';mctx.fillRect(0,0,innerWidth,innerHeight);mctx.fillStyle='rgba(47,207,85,.55)';mctx.font=fontSize+'px monospace';drops.forEach(function(y,i){var digit=Math.random()<.5?'0':'1';mctx.fillText(digit,i*fontSize,y*fontSize);if(y*fontSize>innerHeight&&Math.random()>.975)drops[i]=0;else drops[i]+=.2;});requestAnimationFrame(drawMatrix);}
+resizeMatrix();addEventListener('resize',resizeMatrix);drawMatrix();
+document.getElementById('copyright-year').textContent=new Date().getFullYear();var W=240,H=200;
 var stops=[["Brussels",4.35,50.85,1988],["Boumerdès",3.47,36.76,1991],["Toulouse",1.44,43.60,2013],["Rennes",-1.68,48.11,2014],["Rome",12.50,41.90,2016],["Rennes",-1.68,48.11,2017],["Paris",2.35,48.86,2018],["Blois",1.33,47.59,2026]];
 var MS=[[2013,"State Engineer"],[2014,"Master of Science"],[2019,"Doctor of Philosophy"]];
 var LB=[[0,12,-6,0],[1,12,18,0],[2,12,4,0],[3,-12,4,1],[4,12,4,0],[6,12,-6,0],[7,12,12,0]]; // stop, dx, dy, align right
@@ -100,10 +104,11 @@ addEventListener('resize',fit);fit();
 
 // Side panel
 var it=$('it'),ms=$('ms'),rows=[],mrows=[];
-function item(parent,list,y,name,km){var li=document.createElement('li');
-  li.innerHTML='<i class="m"></i><span class="y">'+y+'</span><span>'+name+'</span><span class="km">'+(km||'')+'</span>';
+function item(parent,list,y,name,km,country){var li=document.createElement('li');
+  li.innerHTML='<i class="m"></i><span class="y">'+y+'</span>'+(country?'<span class="flag flag-'+country+'" role="img" aria-label="'+country.toUpperCase()+' flag"></span>':'')+'<span class="city">'+name+'</span><span class="km">'+(km||'')+'</span>';
   parent.appendChild(li);list.push(li);}
-stops.forEach(function(s,i){item(it,rows,s[3],s[0],i?Math.round(legKm[i-1]).toLocaleString('en')+' km':'Start');});
+var routeCountries=['be','dz','fr','fr','it','fr','fr','fr'];
+stops.forEach(function(s,i){item(it,rows,s[3],s[0],i?Math.round(legKm[i-1]).toLocaleString('en')+' km':'Start',routeCountries[i]);});
 MS.forEach(function(x){item(ms,mrows,x[0],x[1]);});
 
 // Animation state
@@ -114,6 +119,8 @@ function dwellT(i){return i===n-1?3.5:Math.min(2.6,.9+.1*(YR[i+1]-YR[i]));}
 function ring(p){rings.push({x:p[0],y:p[1],t:0});}
 ring(pts[0]);
 var lvl=$('lvl'),flash=$('flash');
+var restart=$('restart');
+restart.addEventListener('click',function(){leg=0;phase='dwell';tm=0;flown=0;reached=0;prog=0;ee=0;hdg=headTo(0);year=YR[0];dirty=1;trail=[];rings=[];parts=[];pos=pts[0].slice();ring(pos);restart.classList.remove('visible');lvl.classList.remove('show');flash.classList.remove('show');last=performance.now();});
 function levelUp(name,p){
   for(var i=0;i<70;i++){var a=Math.random()*6.283,sp=15+Math.random()*55;parts.push({x:p[0],y:p[1],vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-10,l:1+Math.random()*.6,c:i%3});}
   ring(p);$('lvb').textContent=name;
@@ -138,15 +145,15 @@ function plane(x,y,a){
 
 function frame(now){
   if(cv.width<2||!base)fit();
-  var dt=Math.min(.1,(now-last)/1000);last=now;tm+=dt;
+  var dt=Math.min(.1,(now-last)/1000);last=now;if(phase!=='ended')tm+=dt;
   if(phase==='dwell'){
     pos=pts[leg].slice();
     if(tm>dwellT(leg)){
       tm=0;dirty=1;
-      if(leg===n-1){leg=0;flown=0;reached=0;trail=[];hdg=headTo(0);ring(pts[0]);}
+      if(leg===n-1){phase='ended';restart.classList.add('visible');}
       else{phase='fly';dur=legDur(leg);}
     }
-  }else{
+  }else if(phase==='fly'){
     prog=Math.min(1,tm/dur);ee=prog<.5?2*prog*prog:1-Math.pow(-2*prog+2,2)/2;
     pos=bez(leg,ee);hdg=tang(leg,ee);
     trail.push(pos.slice());if(trail.length>22)trail.shift();
