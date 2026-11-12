@@ -6,7 +6,7 @@ Karim Kecir's personal page, served as a static site.
 
 - `index.html` contains the page structure and metadata.
 - `index.css` contains the page styling.
-- `index.js` draws and animates the flight path and updates its route and telemetry.
+- `index.js` draws and animates the curriculum journey and updates its route and telemetry.
 - `fonts/`, `ico/`, and `img/` hold static assets for the site.
 - `wrangler.toml` configures the Cloudflare Pages static asset deployment.
 

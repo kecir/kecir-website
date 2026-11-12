@@ -38,6 +38,7 @@ ol{list-style:none;margin:0;padding:0}
 #ms li{display:grid;grid-template-columns:7px 40px minmax(0,1fr) 30px;align-items:center;gap:10px;height:26px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
 #ms .city{white-space:nowrap}
 #ms li .m{width:12px;height:14px;border:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-style:normal}
+#ms li.done .m{background:transparent;border:0;box-shadow:none;animation:none}
 #ms li .m::before{content:"☆";font-size:13px;line-height:1}
 #ms li.done .m::before{content:"★";color:var(--g2)}
 li .m{width:7px;height:7px;border:1px solid var(--dim)}
