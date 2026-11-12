@@ -120,23 +120,29 @@ function item(parent,list,y,name,km,country,cap){var li=document.createElement('
   parent.appendChild(li);list.push(li);}
 var routeCountries=['be','dz','fr','fr','it','fr','fr','fr'];
 stops.forEach(function(s,i){item(it,rows,s[3],s[0],i?Math.round(legKm[i-1]).toLocaleString('en')+' km':'Start',routeCountries[i]);});
+var madridPlan=document.createElement('li');madridPlan.className='planned-cancelled';madridPlan.hidden=true;
+madridPlan.innerHTML='<i class="m"></i><span class="y">2020</span><span class="flag flag-es" role="img" aria-label="Spain flag"></span><span class="city">Madrid</span><span class="km">CANCELLED</span>';it.appendChild(madridPlan);
 MS.forEach(function(x,i){item(ms,mrows,x[0],x[1],'',null,i===2?'phd-cap':'master-cap');});
 
 // Animation state
 var leg=0,phase='dwell',tm=0,flown=0,dur=1,reached=0,prog=0,ee=0,hdg=headTo(0),year=YR[0],dirty=1,last=performance.now();
-var trail=[],rings=[],parts=[],pos=pts[0].slice(),PC=['#ffffff','#c8ffd5','#5dff8a'],quakeStart=0,quakeRipples=0;
+var trail=[],rings=[],parts=[],pos=pts[0].slice(),PC=['#ffffff','#c8ffd5','#5dff8a'],quakeStart=0,quakeRipples=0,birthElapsed=0,birthFlightDuration=2.7,birthFadeDuration=.7,birthFadeInDuration=1.4,birthEggFallDuration=1,birthLandingTime=birthFlightDuration+birthEggFallDuration,birthEventDuration=Math.max(birthFlightDuration+birthFadeDuration,birthLandingTime),birthStartX=pts[0][0]+44,lastBirthYearVisible=false;
 // Approximate geographic centers keep each trophy clearly inside its country.
 var worldCupEvents=[{year:1998,country:'FRANCE',territory:'fr',p:P(2.3,46.6)},{year:2006,country:'ITALY',territory:'it',p:P(12.6,42.8)},{year:2010,country:'SPAIN',territory:'es',p:P(-3.5,40.2)},{year:2014,country:'GERMANY',territory:'de',p:P(10.45,51.1)},{year:2018,country:'FRANCE',territory:'fr',p:P(2.3,46.6)},{year:2026,country:'SPAIN',territory:'es',p:P(-3.5,40.2)}],worldCupActive=[];
 function legDur(i){return i===n-2?3.6:Math.max(1.8,legKm[i]/320);}
-function dwellT(i){return i===n-1?3.5:i===1?8.8:i===6?6.7:Math.min(2.6,.9+.1*(YR[i+1]-YR[i]));}
-function ring(p){rings.push({x:p[0],y:p[1],t:0});}
+function dwellT(i){return i===0?4.9:i===n-1?3.5:i===1?8.8:i===6?6.7:Math.min(2.6,.9+.1*(YR[i+1]-YR[i]));}
+function ring(p,color){rings.push({x:p[0],y:p[1],t:0,color:color||'#5dff8a'});}
 ring(pts[0]);
 var lvl=$('lvl'),flash=$('flash');
 var restart=$('restart');
 var algeriaLink=$('algeriaLink');
 var earthquakeLink=$('earthquakeLink');
 var covidLink=$('covidLink');
-restart.addEventListener('click',function(){leg=0;phase='dwell';tm=0;flown=0;reached=0;prog=0;ee=0;hdg=headTo(0);year=YR[0];dirty=1;trail=[];rings=[];parts=[];worldCupActive=[];worldCupEvents.forEach(function(e){e.fired=false;});pos=pts[0].slice();quakeStart=0;quakeRipples=0;ring(pos);restart.classList.remove('visible');lvl.classList.remove('show');flash.classList.remove('show');last=performance.now();});
+var telemetry=$('telemetry');
+var milestoneSection=$('milestoneSection');
+var slimStork=true; // Set false to restore the stork's original proportions.
+var yellowStorkBeak=true; // Set false to restore the green beak.
+restart.addEventListener('click',function(){leg=0;phase='dwell';tm=0;flown=0;reached=0;prog=0;ee=0;hdg=headTo(0);year=YR[0];dirty=1;trail=[];rings=[];parts=[];worldCupActive=[];worldCupEvents.forEach(function(e){e.fired=false;});pos=pts[0].slice();quakeStart=0;quakeRipples=0;birthElapsed=0;ring(pos);restart.classList.remove('visible');lvl.classList.remove('show');flash.classList.remove('show');last=performance.now();});
 function levelUp(name,p,index,sparkStops){
   var sparks=sparkStops.map(function(i){return pts[i];});
   sparks.forEach(function(point){for(var i=0;i<36;i++){var a=i*6.283/36+(Math.random()-.5)*.12,sp=24+Math.random()*34;parts.push({x:point[0],y:point[1],vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:.8+Math.random()*.45,c:i%3});}});
@@ -163,6 +169,22 @@ function plane(x,y,a){
   ctx.closePath();ctx.lineJoin='round';ctx.lineWidth=2.5;ctx.strokeStyle='rgba(2,10,5,.9)';ctx.stroke();
   ctx.fillStyle='#f4fff4';ctx.fill();ctx.restore();
 }
+function stork(x,y,flap,alpha){
+  ctx.save();ctx.globalAlpha=alpha;ctx.translate(x*sc,y*sc);ctx.scale(dpr,dpr);if(slimStork)ctx.scale(1.3,.64);ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.fillStyle='#f4fff4';ctx.strokeStyle='#7f8c83';ctx.lineWidth=1.1;
+  ctx.beginPath();ctx.moveTo(-4,-1);ctx.quadraticCurveTo(-1,-4,4,-2);ctx.lineTo(7,-1);ctx.lineTo(4,2);ctx.quadraticCurveTo(-1,3,-4,-1);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-3,-1);ctx.quadraticCurveTo(-5,-3,-4,-6);ctx.quadraticCurveTo(-3,-8,-6,-8);ctx.stroke();
+  ctx.beginPath();ctx.arc(-6,-8,1.8,0,6.283);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-7.5,-8);ctx.lineTo(-11,-7.4);ctx.lineTo(-7.5,-6.8);ctx.closePath();ctx.fillStyle=yellowStorkBeak?'#e2b33d':'#c8ffd5';ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.arc(-6.6,-8.4,.35,0,6.283);ctx.fillStyle='#59675e';ctx.fill();
+  ctx.save();ctx.translate(0,-1);ctx.rotate(Math.sin(flap)*(slimStork ? .18 : .38));ctx.fillStyle='#ffffff';ctx.beginPath();ctx.moveTo(-2,0);
+  if(slimStork){ctx.quadraticCurveTo(-1,-4,2,-5);ctx.quadraticCurveTo(5,-4,5,-2);ctx.quadraticCurveTo(2,1,-2,0);}
+  else{ctx.quadraticCurveTo(-1,-7,2,-8);ctx.quadraticCurveTo(7,-6,5,-2);ctx.quadraticCurveTo(2,1,-2,0);}
+  ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.moveTo(4,-1);ctx.lineTo(8,-3);ctx.lineTo(6,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(1,1);ctx.lineTo(5,1);ctx.lineTo(6,0);ctx.moveTo(3,2);ctx.lineTo(7,2);ctx.lineTo(8,1);ctx.stroke();
+  ctx.restore();
+}
 function train(x,y,a){
   ctx.save();ctx.translate(x*sc,y*sc);ctx.rotate(a);var s=.7*dpr;ctx.scale(s,s);
   ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=2.5;ctx.strokeStyle='rgba(2,10,5,.9)';ctx.fillStyle='#f4fff4';
@@ -184,7 +206,7 @@ function countryHatch(country){
 function mapLabel(text,x,y){ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='#05150b';ctx.strokeText(text,x,y);ctx.fillText(text,x,y);}
 function frame(now){
   if(cv.width<2||!base)fit();
-  var dt=Math.min(.1,(now-last)/1000);last=now;if(phase!=='ended')tm+=dt;
+  var previousYear=year,dt=Math.min(.1,(now-last)/1000);last=now;if(phase!=='ended')tm+=dt;if(birthElapsed<birthEventDuration)birthElapsed+=dt;
   if(phase==='dwell'){
     pos=pts[leg].slice();
     if(tm>dwellT(leg)){
@@ -201,6 +223,10 @@ function frame(now){
   if(phase!=='fly'&&trail.length)trail.shift();
   // Time passes only on the ground: the year counts up while parked and stays frozen in flight
   if(phase==='fly')year=YR[leg+1];
+  else if(leg===0&&phase==='dwell'){
+    if(birthElapsed<birthEventDuration)year=YR[0];
+    else year=Math.min(YR[1],YR[0]+Math.floor((YR[1]-YR[0])*(tm-birthEventDuration)/(dwellT(0)-birthEventDuration)));
+  }
   else if(leg===1&&phase==='dwell'){
     if(tm<2.8)year=1991+Math.floor(tm/2.8*12);
     else if(tm<6.8)year=2003;
@@ -211,9 +237,11 @@ function frame(now){
     else if(tm<4.7)year=2020;
     else year=Math.min(2026,2021+Math.floor((tm-4.7)/.4));
   }else year=leg<n-1?Math.min(YR[leg+1],Math.floor(YR[leg]+(YR[leg+1]-YR[leg])*Math.min(1,tm/(dwellT(leg)*.8)))):YR[leg];
+  var showBirthYear=!(leg===0&&phase==='dwell'&&birthElapsed<birthLandingTime);
+  if(year!==previousYear||showBirthYear!==lastBirthYearVisible){dirty=1;lastBirthYearVisible=showBirthYear;}
   if(year===2003&&!quakeStart){quakeStart=now;quakeRipples=0;}
   if(year!==2003){quakeStart=0;quakeRipples=0;}
-  if(year===2003){var quakeAge=now-quakeStart;while(quakeAge<4000&&quakeAge>=quakeRipples*400){ring(pts[1]);quakeRipples++;}}
+  if(year===2003){var quakeAge=now-quakeStart;while(quakeAge<4000&&quakeAge>=quakeRipples*400){ring(pts[1],'#9b6b3e');quakeRipples++;}}
   worldCupEvents.forEach(function(e){if(!e.fired&&year===e.year){e.fired=true;worldCupActive.push({year:e.year,country:e.country,territory:e.territory,p:e.p.slice(),t:0,goldT:0});}});
   while(phase==='dwell'&&reached<MS.length&&leg===MS[reached][2]&&year>=MS[reached][0]){levelUp(MS[reached][1],pos,reached,MS[reached][3]);reached++;dirty=1;}
 
@@ -226,9 +254,10 @@ function frame(now){
   ['fr','be','it','dz'].forEach(function(country){
     var reachedCountry=(country==='be'&&leg===0)||stops.some(function(_,i){return routeCountries[i]===country&&i<=leg&&(phase==='fly'||leg>0||phase==='ended');});
     if(country===targetCountry&&!reachedCountry){countryFill(country,'#5dff8a',.07+.12*(.5+.5*Math.sin(now/180)));return;}
-    if(reachedCountry)countryFill(country,'#1a7a36',.18);
+    if(reachedCountry)countryFill(country,'#2fcf55',.28);
   });
-  worldCupActive.forEach(function(e){var fade=Math.max(0,1-e.goldT/2.6);countryFill(e.territory,'#e2b33d',.7*fade*fade);});
+  worldCupActive.forEach(function(e){var fade=Math.max(0,1-e.goldT/2.6);countryFill(e.territory,'#f4d03f',.7*fade*fade);});
+  if(year===2003)countryFill('dz','#3d2417',.76);
   var algeriaWarYears=year>=1992&&year<=2002;
   algeriaLink.classList.toggle('active',algeriaWarYears);
   earthquakeLink.classList.toggle('active',year===2003);
@@ -256,7 +285,7 @@ function frame(now){
     }
   });
   rings=rings.filter(function(r){r.t+=dt;return r.t<1.2;});
-  rings.forEach(function(r){ctx.globalAlpha=(1-r.t/1.2)*.8;ctx.strokeStyle='#5dff8a';ctx.lineWidth=dpr;
+  rings.forEach(function(r){ctx.globalAlpha=(1-r.t/1.2)*.8;ctx.strokeStyle=r.color;ctx.lineWidth=dpr;
     ctx.beginPath();ctx.arc(r.x*sc,r.y*sc,Math.max(0,r.t*60*dpr),0,6.283);ctx.stroke();});
   trail.forEach(function(p,i){ctx.globalAlpha=i/trail.length*.8;ctx.fillStyle='#5dff8a';ctx.fillRect(p[0]*sc-dpr*.75,p[1]*sc-dpr*.75,1.5*dpr,1.5*dpr);});
   ctx.globalAlpha=1;
@@ -281,7 +310,7 @@ function frame(now){
   ctx.globalAlpha=1;
   ctx.globalAlpha=1;
   ctx.font='500 '+(11*dpr)+"px 'IBM Plex Mono', monospace";if('letterSpacing' in ctx)ctx.letterSpacing=1.2*dpr+'px';
-  ctx.textAlign='left';ctx.fillStyle='#5dff8a';ctx.fillText(String(year),pos[0]*sc+14*dpr,pos[1]*sc-12*dpr);
+  if(showBirthYear){ctx.textAlign='left';ctx.fillStyle='#5dff8a';ctx.fillText(String(year),pos[0]*sc+14*dpr,pos[1]*sc-12*dpr);}
 
   if(year===2020&&tm<3.2){
     var paris=P(2.35,48.86),madrid=P(-3.70,40.42);
@@ -298,16 +327,16 @@ function frame(now){
   }
 
   if(quakeActive){
-    ctx.fillStyle='rgba(77,53,32,.24)';ctx.fillRect(0,0,cv.width,cv.height);
-    ctx.strokeStyle='#765b3b';ctx.lineWidth=2*dpr;ctx.strokeRect(dpr,dpr,cv.width-2*dpr,cv.height-2*dpr);
+    ctx.fillStyle='rgba(43,25,14,.38)';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle='#50321e';ctx.lineWidth=2*dpr;ctx.strokeRect(dpr,dpr,cv.width-2*dpr,cv.height-2*dpr);
     ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
     ctx.strokeStyle='#21180f';ctx.lineWidth=4*dpr;
     ctx.beginPath();ctx.moveTo(13*dpr,15*dpr);ctx.lineTo(22*dpr,15*dpr);ctx.lineTo(26*dpr,8*dpr);ctx.lineTo(31*dpr,35*dpr);ctx.lineTo(36*dpr,18*dpr);ctx.lineTo(42*dpr,18*dpr);ctx.stroke();
     ctx.beginPath();ctx.moveTo(17*dpr,40*dpr);ctx.lineTo(23*dpr,35*dpr);ctx.lineTo(27*dpr,41*dpr);ctx.lineTo(32*dpr,36*dpr);ctx.lineTo(38*dpr,41*dpr);ctx.stroke();
-    ctx.strokeStyle='#a38a63';ctx.lineWidth=2*dpr;
+    ctx.strokeStyle='#9b6b3e';ctx.lineWidth=2*dpr;
     ctx.beginPath();ctx.moveTo(13*dpr,15*dpr);ctx.lineTo(22*dpr,15*dpr);ctx.lineTo(26*dpr,8*dpr);ctx.lineTo(31*dpr,35*dpr);ctx.lineTo(36*dpr,18*dpr);ctx.lineTo(42*dpr,18*dpr);ctx.stroke();
     ctx.beginPath();ctx.moveTo(17*dpr,40*dpr);ctx.lineTo(23*dpr,35*dpr);ctx.lineTo(27*dpr,41*dpr);ctx.lineTo(32*dpr,36*dpr);ctx.lineTo(38*dpr,41*dpr);ctx.stroke();
-    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='#21180f';ctx.strokeText('BOUMERDÈS 2003 EARTHQUAKE',54*dpr,29*dpr);ctx.fillStyle='#a38a63';ctx.fillText('BOUMERDÈS 2003 EARTHQUAKE',54*dpr,29*dpr);
+    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='#160d08';ctx.strokeText('BOUMERDÈS 2003 EARTHQUAKE',54*dpr,29*dpr);ctx.fillStyle='#9b6b3e';ctx.fillText('BOUMERDÈS 2003 EARTHQUAKE',54*dpr,29*dpr);
     ctx.restore();
   }
 
@@ -316,14 +345,26 @@ function frame(now){
     ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.strokeStyle='#a9d9b5';ctx.strokeText('ALGERIAN BLACK DECADE',56*dpr,29*dpr);ctx.fillStyle='#030a05';ctx.fillText('ALGERIAN BLACK DECADE',56*dpr,29*dpr);ctx.restore();
   }
 
+  if(birthElapsed<birthEventDuration){
+    var birdStart=birthStartX,approach=Math.min(1,birthElapsed/birthFlightDuration),fadeProgress=Math.max(0,Math.min(1,(birthElapsed-birthFlightDuration)/birthFadeDuration));
+    var birdX=birdStart-(birdStart-pts[0][0])*approach-12*fadeProgress,birdY=4.2+Math.sin(now/125)*.4,eggAge=birthElapsed-birthFlightDuration;
+    if(eggAge>=0&&eggAge<birthEggFallDuration){
+      var dropProgress=Math.min(1,eggAge/birthEggFallDuration);dropProgress=dropProgress*dropProgress*(3-2*dropProgress);
+      var eggY=5.5+(pts[0][1]-5.5)*dropProgress;
+      ctx.save();ctx.translate(pts[0][0]*sc,eggY*sc);ctx.rotate(-.22);ctx.beginPath();ctx.ellipse(0,0,3*dpr,4*dpr,0,0,6.283);ctx.fillStyle='#f4fff4';ctx.fill();ctx.lineWidth=dpr;ctx.strokeStyle='#07150b';ctx.stroke();ctx.restore();
+    }
+    var fadeIn=Math.min(1,birthElapsed/birthFadeInDuration);fadeIn=fadeIn*fadeIn*(3-2*fadeIn);
+    stork(birdX,birdY,now/105,fadeIn*(1-fadeProgress));
+  }
+
   worldCupActive=worldCupActive.filter(function(e){e.t+=dt;e.goldT+=dt;return e.goldT<2.6;});
   worldCupActive.forEach(function(e){
     if(e.t>=1.15)return;
     var t=e.t/1.15,ease=1-Math.pow(1-t,3),alpha=t<.55?.82:.82*(1-(t-.55)/.45),x=e.p[0]*sc,y=e.p[1]*sc-25*dpr*ease;
-    ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.lineJoin='round';ctx.lineCap='round';ctx.fillStyle='#e2b33d';
-    ctx.font='500 '+(6*dpr)+"px 'IBM Plex Mono', monospace";ctx.textAlign='right';ctx.fillStyle='#f0cc6b';
+    ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.lineJoin='round';ctx.lineCap='round';ctx.fillStyle='#f4d03f';
+    ctx.font='500 '+(6*dpr)+"px 'IBM Plex Mono', monospace";ctx.textAlign='right';ctx.fillStyle='#ffe87a';
     ctx.fillText(e.country,-8*dpr,-3*dpr);ctx.fillText('FIFA WORLD CUP',-8*dpr,4*dpr);ctx.fillText('CHAMPIONS '+e.year,-8*dpr,11*dpr);
-    ctx.fillStyle='#e2b33d';
+    ctx.fillStyle='#f4d03f';
     // Slim sculptural silhouette, with a rounded crown and narrow tapered body.
     ctx.beginPath();ctx.moveTo(-2.2*dpr,-8*dpr);ctx.quadraticCurveTo(0,-10*dpr,2.2*dpr,-8*dpr);ctx.lineTo(3.2*dpr,-5*dpr);ctx.lineTo(2*dpr,-3*dpr);ctx.lineTo(3*dpr,-1*dpr);ctx.lineTo(1.6*dpr,1*dpr);ctx.lineTo(2.6*dpr,4*dpr);ctx.lineTo(1.1*dpr,8*dpr);ctx.lineTo(1.6*dpr,10*dpr);ctx.lineTo(-1.5*dpr,10*dpr);ctx.lineTo(-.8*dpr,7*dpr);ctx.lineTo(-3*dpr,3*dpr);ctx.lineTo(-1.7*dpr,0);ctx.lineTo(-3.2*dpr,-3*dpr);ctx.lineTo(-2.6*dpr,-5*dpr);ctx.closePath();ctx.fill();
     ctx.fillRect(-3.8*dpr,11*dpr,7.6*dpr,1.3*dpr);
@@ -342,15 +383,20 @@ function frame(now){
   if(dirty){
     rows.forEach(function(li,i){
       var cur=(phase==='dwell'&&i===leg)||(phase==='fly'&&i===leg+1);
+      li.hidden=i>leg+(phase==='fly'?1:0)||(i===0&&!showBirthYear);
       li.className=cur?'cur':i<=leg?'done':'';
     });
-    mrows.forEach(function(li,i){li.className=i<reached?'done':'';});
+    madridPlan.hidden=year!==2020;
+    var anyMilestoneVisible=false;
+    mrows.forEach(function(li,i){li.hidden=!showBirthYear||(i===0?year<MS[i][0]-6:reached<i);li.className=i<reached?'done':'';if(!li.hidden)anyMilestoneVisible=true;});
+    milestoneSection.classList.toggle('empty',!anyMilestoneVisible);
     $('dr').classList.toggle('on',reached>=MS.length);
     dirty=0;
   }
   var lon=-10+pos[0]/W*26,lat=52-pos[1]/H*19,cu=flown+(phase==='fly'?legKm[leg]*prog:0);
+  telemetry.classList.toggle('waiting-for-birth',!showBirthYear);
   $('pos').textContent=lat.toFixed(2)+'°N '+Math.abs(lon).toFixed(2)+'°'+(lon<0?'W':'E');
-  $('yr').textContent=year;
+  $('yr').textContent=showBirthYear?year:'';
   $('lvv').textContent='LV.'+(reached+1);
   $('fl').textContent=Math.round(cu).toLocaleString('en')+' / '+Math.round(total).toLocaleString('en')+' km';
   $('bar').style.width=(cu/total*100)+'%';
