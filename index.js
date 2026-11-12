@@ -63,9 +63,18 @@ land[4],
 land[2],land[3],
 [].concat(MAAL,[[-3,30],[7.7,30]],rev(ALTN),[[8.7,37.4],[5,37.4],[2,37.2],[-0.6,36.4],[-2.2,35.6]])
 ];
+var wcCountryShapes={
+  fr:hl[0],it:hl[3],
+  es:[[-9.3,42.9],[-8.9,43.2],[-8.2,43.75],[-5.7,43.6],[-3.8,43.5],[-1.8,43.4],[-1.5,43],[-1.7,42.6],[-1.8,42.4],[-1.5,42],[-.5,41.8],[.5,41.4],[1.2,41.1],[2.2,41.4],[3.2,42.3],[3,42],[2.2,41.4],[1.2,41.1],[.8,40.7],[0,40],[-.5,38.3],[-.7,37.6],[-1.6,37.1],[-2.2,36.7],[-3,36.75],[-4.4,36.7],[-5.35,36.1],[-6.04,36.18],[-6.3,36.5],[-6.35,36.8],[-7.4,37.2],[-7,38],[-7.3,38.4],[-7,38.9],[-7,39.7],[-6.85,40.3],[-6.9,41],[-6.2,41.5],[-6.55,41.6],[-7.2,41.95],[-8.2,42.1],[-8.87,41.87],[-8.9,42.4]],
+  de:[[5.87,47.55],[7.59,47.6],[7.6,48],[7.8,48.6],[8.2,48.97],[7.9,49.05],[7,49.15],[6.37,49.47],[6.4,50.33],[6.2,50.55],[6,50.75],[5.7,50.75],[5.55,51.2],[5.1,51.3],[4.8,51.5],[5.95,51.85],[7,52.2],[7.5,53],[8,54],[8.5,55],[10,54.8],[11.5,54.6],[13,54.5],[14.3,54.1],[14.4,53.2],[14.6,52],[14.7,51.5],[14.8,50.85],[14.3,50.9],[13,50.5],[12.1,50.3],[12.4,49.75],[12.8,49.35],[13.2,48.95],[13.8,48.77],[13,47.5],[12.6,47.65],[12.1,47.6],[11.25,47.4],[10.9,47.4],[10.45,47.55],[10.2,47.3],[9.6,47.55],[9.1,47.65],[8.6,47.7],[8.1,47.6],[7.59,47.6]]
+};
 
 // State and geometry
 var cv=$('cv'),ctx=cv.getContext('2d'),sc=1,dpr=Math.min(window.devicePixelRatio||1,2),base;
+var hatchTile=document.createElement('canvas');hatchTile.width=Math.ceil(16*dpr);hatchTile.height=Math.ceil(16*dpr);
+var hatchCtx=hatchTile.getContext('2d');hatchCtx.strokeStyle='rgba(169,217,181,.82)';hatchCtx.lineWidth=1.3*dpr;hatchCtx.lineCap='square';
+hatchCtx.beginPath();hatchCtx.moveTo(3*dpr,3*dpr);hatchCtx.lineTo(11*dpr,11*dpr);hatchCtx.moveTo(11*dpr,3*dpr);hatchCtx.lineTo(3*dpr,11*dpr);hatchCtx.stroke();
+var hatchPattern=ctx.createPattern(hatchTile,'repeat');
 var pts=stops.map(function(s){return P(s[1],s[2]);});
 var K=.2,cs=pts.slice(0,n-1).map(function(a,i){var b=pts[i+1],dx=b[0]-a[0],dy=b[1]-a[1];return [(a[0]+b[0])/2-dy*K,(a[1]+b[1])/2+dx*K];});
 function bez(i,t){var a=pts[i],b=pts[i+1],c=cs[i],u=1-t;if(i===2||i===5||i===6)return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];return [u*u*a[0]+2*u*t*c[0]+t*t*b[0],u*u*a[1]+2*u*t*c[1]+t*t*b[1]];}
@@ -115,14 +124,19 @@ MS.forEach(function(x,i){item(ms,mrows,x[0],x[1],'',null,i===2?'phd-cap':'master
 
 // Animation state
 var leg=0,phase='dwell',tm=0,flown=0,dur=1,reached=0,prog=0,ee=0,hdg=headTo(0),year=YR[0],dirty=1,last=performance.now();
-var trail=[],rings=[],parts=[],pos=pts[0].slice(),PC=['#ffffff','#c8ffd5','#5dff8a'];
+var trail=[],rings=[],parts=[],pos=pts[0].slice(),PC=['#ffffff','#c8ffd5','#5dff8a'],quakeStart=0,quakeRipples=0;
+// Approximate geographic centers keep each trophy clearly inside its country.
+var worldCupEvents=[{year:1998,country:'FRANCE',territory:'fr',p:P(2.3,46.6)},{year:2006,country:'ITALY',territory:'it',p:P(12.6,42.8)},{year:2010,country:'SPAIN',territory:'es',p:P(-3.5,40.2)},{year:2014,country:'GERMANY',territory:'de',p:P(10.45,51.1)},{year:2018,country:'FRANCE',territory:'fr',p:P(2.3,46.6)},{year:2026,country:'SPAIN',territory:'es',p:P(-3.5,40.2)}],worldCupActive=[];
 function legDur(i){return i===n-2?3.6:Math.max(1.8,legKm[i]/320);}
-function dwellT(i){return i===n-1?3.5:i===6?5.2:Math.min(2.6,.9+.1*(YR[i+1]-YR[i]));}
+function dwellT(i){return i===n-1?3.5:i===1?8.8:i===6?6.7:Math.min(2.6,.9+.1*(YR[i+1]-YR[i]));}
 function ring(p){rings.push({x:p[0],y:p[1],t:0});}
 ring(pts[0]);
 var lvl=$('lvl'),flash=$('flash');
 var restart=$('restart');
-restart.addEventListener('click',function(){leg=0;phase='dwell';tm=0;flown=0;reached=0;prog=0;ee=0;hdg=headTo(0);year=YR[0];dirty=1;trail=[];rings=[];parts=[];pos=pts[0].slice();ring(pos);restart.classList.remove('visible');lvl.classList.remove('show');flash.classList.remove('show');last=performance.now();});
+var algeriaLink=$('algeriaLink');
+var earthquakeLink=$('earthquakeLink');
+var covidLink=$('covidLink');
+restart.addEventListener('click',function(){leg=0;phase='dwell';tm=0;flown=0;reached=0;prog=0;ee=0;hdg=headTo(0);year=YR[0];dirty=1;trail=[];rings=[];parts=[];worldCupActive=[];worldCupEvents.forEach(function(e){e.fired=false;});pos=pts[0].slice();quakeStart=0;quakeRipples=0;ring(pos);restart.classList.remove('visible');lvl.classList.remove('show');flash.classList.remove('show');last=performance.now();});
 function levelUp(name,p,index,sparkStops){
   var sparks=sparkStops.map(function(i){return pts[i];});
   sparks.forEach(function(point){for(var i=0;i<36;i++){var a=i*6.283/36+(Math.random()-.5)*.12,sp=24+Math.random()*34;parts.push({x:point[0],y:point[1],vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:.8+Math.random()*.45,c:i%3});}});
@@ -157,9 +171,15 @@ function train(x,y,a){
   ctx.restore();
 }
 function countryFill(country,color,alpha){
-  var index={fr:0,be:2,it:3,dz:6}[country];if(index===undefined)return;
+  var index={fr:0,be:2,it:3,dz:6}[country],poly=index===undefined?wcCountryShapes[country]:hl[index];if(!poly)return;
   ctx.save();ctx.beginPath();land.forEach(function(poly){poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();});ctx.clip();
-  var poly=hl[index];ctx.beginPath();poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.fill();ctx.restore();
+  ctx.beginPath();poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.fill();ctx.restore();
+}
+function countryHatch(country){
+  var index={fr:0,be:2,it:3,dz:6}[country],poly=index===undefined?wcCountryShapes[country]:hl[index];if(!poly)return;
+  ctx.save();ctx.beginPath();land.forEach(function(shape){shape.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();});ctx.clip();
+  ctx.beginPath();poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();ctx.clip();
+  ctx.globalAlpha=.95;ctx.fillStyle=hatchPattern;ctx.fillRect(0,0,cv.width,cv.height);ctx.restore();
 }
 function mapLabel(text,x,y){ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='#05150b';ctx.strokeText(text,x,y);ctx.fillText(text,x,y);}
 function frame(now){
@@ -181,14 +201,26 @@ function frame(now){
   if(phase!=='fly'&&trail.length)trail.shift();
   // Time passes only on the ground: the year counts up while parked and stays frozen in flight
   if(phase==='fly')year=YR[leg+1];
+  else if(leg===1&&phase==='dwell'){
+    if(tm<2.8)year=1991+Math.floor(tm/2.8*12);
+    else if(tm<6.8)year=2003;
+    else year=Math.min(2013,2004+Math.floor((tm-6.8)/.2));
+  }
   else if(leg===6&&phase==='dwell'){
     if(tm<1.6)year=2018+Math.floor(tm/1.6*2);
-    else if(tm<3.2)year=2020;
-    else year=Math.min(2026,2021+Math.floor((tm-3.2)/.4));
+    else if(tm<4.7)year=2020;
+    else year=Math.min(2026,2021+Math.floor((tm-4.7)/.4));
   }else year=leg<n-1?Math.min(YR[leg+1],Math.floor(YR[leg]+(YR[leg+1]-YR[leg])*Math.min(1,tm/(dwellT(leg)*.8)))):YR[leg];
+  if(year===2003&&!quakeStart){quakeStart=now;quakeRipples=0;}
+  if(year!==2003){quakeStart=0;quakeRipples=0;}
+  if(year===2003){var quakeAge=now-quakeStart;while(quakeAge<4000&&quakeAge>=quakeRipples*400){ring(pts[1]);quakeRipples++;}}
+  worldCupEvents.forEach(function(e){if(!e.fired&&year===e.year){e.fired=true;worldCupActive.push({year:e.year,country:e.country,territory:e.territory,p:e.p.slice(),t:0,goldT:0});}});
   while(phase==='dwell'&&reached<MS.length&&leg===MS[reached][2]&&year>=MS[reached][0]){levelUp(MS[reached][1],pos,reached,MS[reached][3]);reached++;dirty=1;}
 
   // Map
+  var quakeActive=year===2003,quakeAge=quakeActive?now-quakeStart:0;
+  ctx.save();
+  if(quakeActive){var shake=2.2*dpr*(.35+.65*Math.sin(quakeAge/150));ctx.translate(Math.sin(quakeAge/31)*shake,Math.cos(quakeAge/27)*shake);}
   ctx.drawImage(base,0,0);
   var targetCountry=phase==='fly'?routeCountries[leg+1]:(leg===0&&phase==='dwell'?routeCountries[0]:null);
   ['fr','be','it','dz'].forEach(function(country){
@@ -196,6 +228,12 @@ function frame(now){
     if(country===targetCountry&&!reachedCountry){countryFill(country,'#5dff8a',.07+.12*(.5+.5*Math.sin(now/180)));return;}
     if(reachedCountry)countryFill(country,'#1a7a36',.18);
   });
+  worldCupActive.forEach(function(e){var fade=Math.max(0,1-e.goldT/2.6);countryFill(e.territory,'#e2b33d',.7*fade*fade);});
+  var algeriaWarYears=year>=1992&&year<=2002;
+  algeriaLink.classList.toggle('active',algeriaWarYears);
+  earthquakeLink.classList.toggle('active',year===2003);
+  covidLink.classList.toggle('active',year>=2020&&year<=2023);
+  if(algeriaWarYears){countryFill('dz','#000000',.62);countryHatch('dz');}
   ctx.lineCap='round';ctx.lineJoin='round';
   for(var i=0;i<n-1;i++){
     if(i<leg){ctx.setLineDash([]);ctx.lineWidth=1.6*dpr;ctx.strokeStyle='#1a7a36';stroke(i,0,1);}
@@ -245,17 +283,52 @@ function frame(now){
   ctx.font='500 '+(11*dpr)+"px 'IBM Plex Mono', monospace";if('letterSpacing' in ctx)ctx.letterSpacing=1.2*dpr+'px';
   ctx.textAlign='left';ctx.fillStyle='#5dff8a';ctx.fillText(String(year),pos[0]*sc+14*dpr,pos[1]*sc-12*dpr);
 
-  if(year===2020){
+  if(year===2020&&tm<3.2){
     var paris=P(2.35,48.86),madrid=P(-3.70,40.42);
     var px=paris[0]*sc,py=paris[1]*sc,mx=madrid[0]*sc,my=madrid[1]*sc,cx=(px+mx)/2,cy=(py+my)/2-58*dpr;
-    ctx.save();ctx.globalAlpha=.3+.7*(.5+.5*Math.sin(now/170));ctx.strokeStyle='rgba(196,85,77,.9)';ctx.lineWidth=1.5*dpr;ctx.setLineDash([4*dpr,3*dpr]);ctx.beginPath();ctx.moveTo(px,py);ctx.quadraticCurveTo(cx,cy,mx,my);ctx.stroke();ctx.setLineDash([]);
+    ctx.save();ctx.globalAlpha=.3+.7*(.5+.5*Math.sin(now/170));ctx.strokeStyle='#ff4055';ctx.lineWidth=1.5*dpr;ctx.setLineDash([4*dpr,3*dpr]);ctx.beginPath();ctx.moveTo(px,py);ctx.quadraticCurveTo(cx,cy,mx,my);ctx.stroke();ctx.setLineDash([]);
     var crossX=(px+2*cx+mx)/4,crossY=(py+2*cy+my)/4;ctx.lineWidth=2*dpr;ctx.beginPath();ctx.moveTo(crossX-5*dpr,crossY-5*dpr);ctx.lineTo(crossX+5*dpr,crossY+5*dpr);ctx.moveTo(crossX+5*dpr,crossY-5*dpr);ctx.lineTo(crossX-5*dpr,crossY+5*dpr);ctx.stroke();ctx.restore();
   }
   if(year>=2020&&year<=2023){
-    ctx.fillStyle='rgba(180,35,45,.28)';ctx.fillRect(0,0,cv.width,cv.height);
-    ctx.fillStyle='#ff8a80';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(36*dpr)+'px sans-serif';ctx.fillText('\u2623',28*dpr,28*dpr);
-    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='rgba(40,5,8,.9)';ctx.strokeText('COVID-19',56*dpr,29*dpr);ctx.fillStyle='#ff8a80';ctx.fillText('COVID-19',56*dpr,29*dpr);ctx.textBaseline='alphabetic';
+    var covidFlash=.18+.14*(.5+.5*Math.sin(now/240));
+    ctx.fillStyle='rgba(255,45,58,'+covidFlash+')';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle='#ff4055';ctx.lineWidth=2*dpr;ctx.strokeRect(dpr,dpr,cv.width-2*dpr,cv.height-2*dpr);
+    ctx.save();ctx.fillStyle='#ff4055';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(36*dpr)+'px sans-serif';ctx.fillText('\u2623',28*dpr,28*dpr);
+    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='rgba(22,5,8,.95)';ctx.strokeText('COVID-19 GLOBAL PANDEMIC',56*dpr,29*dpr);ctx.fillStyle='#ff4055';ctx.fillText('COVID-19 GLOBAL PANDEMIC',56*dpr,29*dpr);ctx.restore();
   }
+
+  if(quakeActive){
+    ctx.fillStyle='rgba(77,53,32,.24)';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle='#765b3b';ctx.lineWidth=2*dpr;ctx.strokeRect(dpr,dpr,cv.width-2*dpr,cv.height-2*dpr);
+    ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle='#21180f';ctx.lineWidth=4*dpr;
+    ctx.beginPath();ctx.moveTo(13*dpr,15*dpr);ctx.lineTo(22*dpr,15*dpr);ctx.lineTo(26*dpr,8*dpr);ctx.lineTo(31*dpr,35*dpr);ctx.lineTo(36*dpr,18*dpr);ctx.lineTo(42*dpr,18*dpr);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(17*dpr,40*dpr);ctx.lineTo(23*dpr,35*dpr);ctx.lineTo(27*dpr,41*dpr);ctx.lineTo(32*dpr,36*dpr);ctx.lineTo(38*dpr,41*dpr);ctx.stroke();
+    ctx.strokeStyle='#a38a63';ctx.lineWidth=2*dpr;
+    ctx.beginPath();ctx.moveTo(13*dpr,15*dpr);ctx.lineTo(22*dpr,15*dpr);ctx.lineTo(26*dpr,8*dpr);ctx.lineTo(31*dpr,35*dpr);ctx.lineTo(36*dpr,18*dpr);ctx.lineTo(42*dpr,18*dpr);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(17*dpr,40*dpr);ctx.lineTo(23*dpr,35*dpr);ctx.lineTo(27*dpr,41*dpr);ctx.lineTo(32*dpr,36*dpr);ctx.lineTo(38*dpr,41*dpr);ctx.stroke();
+    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='#21180f';ctx.strokeText('BOUMERDÈS 2003 EARTHQUAKE',54*dpr,29*dpr);ctx.fillStyle='#a38a63';ctx.fillText('BOUMERDÈS 2003 EARTHQUAKE',54*dpr,29*dpr);
+    ctx.restore();
+  }
+
+  if(algeriaWarYears){
+    ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(34*dpr)+'px sans-serif';ctx.lineWidth=1.5*dpr;ctx.strokeStyle='#a9d9b5';ctx.strokeText('\u2620',28*dpr,28*dpr);ctx.fillStyle='#030a05';ctx.fillText('\u2620',28*dpr,28*dpr);
+    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.strokeStyle='#a9d9b5';ctx.strokeText('ALGERIAN BLACK DECADE',56*dpr,29*dpr);ctx.fillStyle='#030a05';ctx.fillText('ALGERIAN BLACK DECADE',56*dpr,29*dpr);ctx.restore();
+  }
+
+  worldCupActive=worldCupActive.filter(function(e){e.t+=dt;e.goldT+=dt;return e.goldT<2.6;});
+  worldCupActive.forEach(function(e){
+    if(e.t>=1.15)return;
+    var t=e.t/1.15,ease=1-Math.pow(1-t,3),alpha=t<.55?.82:.82*(1-(t-.55)/.45),x=e.p[0]*sc,y=e.p[1]*sc-25*dpr*ease;
+    ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.lineJoin='round';ctx.lineCap='round';ctx.fillStyle='#e2b33d';
+    ctx.font='500 '+(6*dpr)+"px 'IBM Plex Mono', monospace";ctx.textAlign='right';ctx.fillStyle='#f0cc6b';
+    ctx.fillText(e.country,-8*dpr,-3*dpr);ctx.fillText('FIFA WORLD CUP',-8*dpr,4*dpr);ctx.fillText('CHAMPIONS '+e.year,-8*dpr,11*dpr);
+    ctx.fillStyle='#e2b33d';
+    // Slim sculptural silhouette, with a rounded crown and narrow tapered body.
+    ctx.beginPath();ctx.moveTo(-2.2*dpr,-8*dpr);ctx.quadraticCurveTo(0,-10*dpr,2.2*dpr,-8*dpr);ctx.lineTo(3.2*dpr,-5*dpr);ctx.lineTo(2*dpr,-3*dpr);ctx.lineTo(3*dpr,-1*dpr);ctx.lineTo(1.6*dpr,1*dpr);ctx.lineTo(2.6*dpr,4*dpr);ctx.lineTo(1.1*dpr,8*dpr);ctx.lineTo(1.6*dpr,10*dpr);ctx.lineTo(-1.5*dpr,10*dpr);ctx.lineTo(-.8*dpr,7*dpr);ctx.lineTo(-3*dpr,3*dpr);ctx.lineTo(-1.7*dpr,0);ctx.lineTo(-3.2*dpr,-3*dpr);ctx.lineTo(-2.6*dpr,-5*dpr);ctx.closePath();ctx.fill();
+    ctx.fillRect(-3.8*dpr,11*dpr,7.6*dpr,1.3*dpr);
+    ctx.restore();
+  });
 
   if(phase==='fly'){
     if(leg===2||leg===5||leg===6)train(pos[0],pos[1],hdg);else plane(pos[0],pos[1],hdg);
@@ -263,6 +336,7 @@ function frame(now){
     ctx.beginPath();ctx.arc(pos[0]*sc,pos[1]*sc,2.4*dpr,0,6.283);ctx.fillStyle='#f4fff4';ctx.fill();
     ctx.beginPath();ctx.arc(pos[0]*sc,pos[1]*sc,4*dpr,0,6.283);ctx.strokeStyle='rgba(244,255,244,.45)';ctx.lineWidth=dpr;ctx.stroke();
   }
+  ctx.restore();
 
   // Panel
   if(dirty){
