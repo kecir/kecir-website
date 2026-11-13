@@ -63,12 +63,6 @@ land[4],
 land[2],land[3],
 [].concat(MAAL,[[-3,30],[7.7,30]],rev(ALTN),[[8.7,37.4],[5,37.4],[2,37.2],[-0.6,36.4],[-2.2,35.6]])
 ];
-var wcCountryShapes={
-  fr:hl[0],it:hl[3],
-  es:[[-9.3,42.9],[-8.9,43.2],[-8.2,43.75],[-5.7,43.6],[-3.8,43.5],[-1.8,43.4],[-1.5,43],[-1.7,42.6],[-1.8,42.4],[-1.5,42],[-.5,41.8],[.5,41.4],[1.2,41.1],[2.2,41.4],[3.2,42.3],[3,42],[2.2,41.4],[1.2,41.1],[.8,40.7],[0,40],[-.5,38.3],[-.7,37.6],[-1.6,37.1],[-2.2,36.7],[-3,36.75],[-4.4,36.7],[-5.35,36.1],[-6.04,36.18],[-6.3,36.5],[-6.35,36.8],[-7.4,37.2],[-7,38],[-7.3,38.4],[-7,38.9],[-7,39.7],[-6.85,40.3],[-6.9,41],[-6.2,41.5],[-6.55,41.6],[-7.2,41.95],[-8.2,42.1],[-8.87,41.87],[-8.9,42.4]],
-  de:[[5.87,47.55],[7.59,47.6],[7.6,48],[7.8,48.6],[8.2,48.97],[7.9,49.05],[7,49.15],[6.37,49.47],[6.4,50.33],[6.2,50.55],[6,50.75],[5.7,50.75],[5.55,51.2],[5.1,51.3],[4.8,51.5],[5.95,51.85],[7,52.2],[7.5,53],[8,54],[8.5,55],[10,54.8],[11.5,54.6],[13,54.5],[14.3,54.1],[14.4,53.2],[14.6,52],[14.7,51.5],[14.8,50.85],[14.3,50.9],[13,50.5],[12.1,50.3],[12.4,49.75],[12.8,49.35],[13.2,48.95],[13.8,48.77],[13,47.5],[12.6,47.65],[12.1,47.6],[11.25,47.4],[10.9,47.4],[10.45,47.55],[10.2,47.3],[9.6,47.55],[9.1,47.65],[8.6,47.7],[8.1,47.6],[7.59,47.6]]
-};
-
 // State and geometry
 var cv=$('cv'),ctx=cv.getContext('2d'),sc=1,dpr=Math.min(window.devicePixelRatio||1,2),base;
 var hatchTile=document.createElement('canvas');hatchTile.width=Math.ceil(16*dpr);hatchTile.height=Math.ceil(16*dpr);
@@ -125,12 +119,11 @@ madridPlan.innerHTML='<i class="m"></i><span class="y">2020</span><span class="f
 MS.forEach(function(x,i){item(ms,mrows,x[0],x[1],'',null,i===2?'phd-cap':'master-cap');});
 
 // Animation state
+var EVENT_SECONDS=4; // Every event banner (Algerian Black Decade, earthquake, COVID) stays up this long, whatever its year span.
 var leg=0,phase='dwell',tm=0,flown=0,dur=1,reached=0,prog=0,ee=0,hdg=headTo(0),year=YR[0],dirty=1,last=performance.now();
-var trail=[],rings=[],parts=[],pos=pts[0].slice(),PC=['#ffffff','#c8ffd5','#5dff8a'],quakeStart=0,quakeRipples=0,birthElapsed=0,birthFlightDuration=2.7,birthFadeDuration=.7,birthFadeInDuration=1.4,birthEggFallDuration=1,birthLandingTime=birthFlightDuration+birthEggFallDuration,birthEventDuration=Math.max(birthFlightDuration+birthFadeDuration,birthLandingTime),birthStartX=pts[0][0]+44,lastBirthYearVisible=false;
-// Approximate geographic centers keep each trophy clearly inside its country.
-var worldCupEvents=[{year:1998,country:'FRANCE',territory:'fr',p:P(2.3,46.6)},{year:2006,country:'ITALY',territory:'it',p:P(12.6,42.8)},{year:2010,country:'SPAIN',territory:'es',p:P(-3.5,40.2)},{year:2014,country:'GERMANY',territory:'de',p:P(10.45,51.1)},{year:2018,country:'FRANCE',territory:'fr',p:P(2.3,46.6)},{year:2026,country:'SPAIN',territory:'es',p:P(-3.5,40.2)}],worldCupActive=[];
+var yearSide=0,trail=[],rings=[],parts=[],pos=pts[0].slice(),PC=['#ffffff','#c8ffd5','#5dff8a'],quakeStart=0,quakeRipples=0,birthElapsed=0,birthFlightDuration=2.7,birthFadeDuration=.7,birthFadeInDuration=1.4,birthEggFallDuration=1,birthLandingTime=birthFlightDuration+birthEggFallDuration,birthEventDuration=Math.max(birthFlightDuration+birthFadeDuration,birthLandingTime),birthStartX=pts[0][0]+44,lastBirthYearVisible=false,covidSymbols=[],covidSymbolsW=0,covidSymbolsH=0;
 function legDur(i){return i===n-2?3.6:Math.max(1.8,legKm[i]/320);}
-function dwellT(i){return i===0?4.9:i===n-1?3.5:i===1?8.8:i===6?6.7:Math.min(2.6,.9+.1*(YR[i+1]-YR[i]));}
+function dwellT(i){return i===0?4.9:i===n-1?3.5:i===1?.6+2*EVENT_SECONDS+2:i===6?1.6+EVENT_SECONDS+1.2:Math.min(2.6,.9+.1*(YR[i+1]-YR[i]));}
 function ring(p,color){rings.push({x:p[0],y:p[1],t:0,color:color||'#5dff8a'});}
 ring(pts[0]);
 var lvl=$('lvl'),flash=$('flash');
@@ -140,9 +133,9 @@ var earthquakeLink=$('earthquakeLink');
 var covidLink=$('covidLink');
 var telemetry=$('telemetry');
 var milestoneSection=$('milestoneSection');
-var slimStork=true; // Set false to restore the stork's original proportions.
-var yellowStorkBeak=true; // Set false to restore the green beak.
-restart.addEventListener('click',function(){leg=0;phase='dwell';tm=0;flown=0;reached=0;prog=0;ee=0;hdg=headTo(0);year=YR[0];dirty=1;trail=[];rings=[];parts=[];worldCupActive=[];worldCupEvents.forEach(function(e){e.fired=false;});pos=pts[0].slice();quakeStart=0;quakeRipples=0;birthElapsed=0;ring(pos);restart.classList.remove('visible');lvl.classList.remove('show');flash.classList.remove('show');last=performance.now();});
+var smallStork=true;  // Set to false to go back to the larger stork.
+var yellowStorkBeak=false; // Set true for a yellow beak (the only coloured detail).
+restart.addEventListener('click',function(){leg=0;phase='dwell';tm=0;flown=0;reached=0;prog=0;ee=0;hdg=headTo(0);year=YR[0];dirty=1;trail=[];rings=[];parts=[];pos=pts[0].slice();quakeStart=0;quakeRipples=0;birthElapsed=0;ring(pos);restart.classList.remove('visible');lvl.classList.remove('show');flash.classList.remove('show');last=performance.now();});
 function levelUp(name,p,index,sparkStops){
   var sparks=sparkStops.map(function(i){return pts[i];});
   sparks.forEach(function(point){for(var i=0;i<36;i++){var a=i*6.283/36+(Math.random()-.5)*.12,sp=24+Math.random()*34;parts.push({x:point[0],y:point[1],vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:.8+Math.random()*.45,c:i%3});}});
@@ -170,35 +163,60 @@ function plane(x,y,a){
   ctx.fillStyle='#f4fff4';ctx.fill();ctx.restore();
 }
 function stork(x,y,flap,alpha){
-  ctx.save();ctx.globalAlpha=alpha;ctx.translate(x*sc,y*sc);ctx.scale(dpr,dpr);if(slimStork)ctx.scale(1.3,.64);ctx.lineJoin='round';ctx.lineCap='round';
-  ctx.fillStyle='#f4fff4';ctx.strokeStyle='#7f8c83';ctx.lineWidth=1.1;
-  ctx.beginPath();ctx.moveTo(-4,-1);ctx.quadraticCurveTo(-1,-4,4,-2);ctx.lineTo(7,-1);ctx.lineTo(4,2);ctx.quadraticCurveTo(-1,3,-4,-1);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.beginPath();ctx.moveTo(-3,-1);ctx.quadraticCurveTo(-5,-3,-4,-6);ctx.quadraticCurveTo(-3,-8,-6,-8);ctx.stroke();
-  ctx.beginPath();ctx.arc(-6,-8,1.8,0,6.283);ctx.fill();ctx.stroke();
-  ctx.beginPath();ctx.moveTo(-7.5,-8);ctx.lineTo(-11,-7.4);ctx.lineTo(-7.5,-6.8);ctx.closePath();ctx.fillStyle=yellowStorkBeak?'#e2b33d':'#c8ffd5';ctx.fill();ctx.stroke();
-  ctx.beginPath();ctx.arc(-6.6,-8.4,.35,0,6.283);ctx.fillStyle='#59675e';ctx.fill();
-  ctx.save();ctx.translate(0,-1);ctx.rotate(Math.sin(flap)*(slimStork ? .18 : .38));ctx.fillStyle='#ffffff';ctx.beginPath();ctx.moveTo(-2,0);
-  if(slimStork){ctx.quadraticCurveTo(-1,-4,2,-5);ctx.quadraticCurveTo(5,-4,5,-2);ctx.quadraticCurveTo(2,1,-2,0);}
-  else{ctx.quadraticCurveTo(-1,-7,2,-8);ctx.quadraticCurveTo(7,-6,5,-2);ctx.quadraticCurveTo(2,1,-2,0);}
-  ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
-  ctx.beginPath();ctx.moveTo(4,-1);ctx.lineTo(8,-3);ctx.lineTo(6,0);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(1,1);ctx.lineTo(5,1);ctx.lineTo(6,0);ctx.moveTo(3,2);ctx.lineTo(7,2);ctx.lineTo(8,1);ctx.stroke();
+  // Top-down silhouette in the same flat style as plane(): white fill, dark outline, angular edges.
+  // Drawn pointing up, then rotated to fly west (towards Brussels).
+  ctx.save();ctx.globalAlpha=alpha;ctx.translate(x*sc,y*sc);ctx.rotate(-Math.PI/2);var size=smallStork ? .55 : .8,s=size*dpr,planeStroke=1.75/size;ctx.scale(s,s);
+  ctx.lineJoin='round';ctx.lineCap='round';
+  var k=.8+.2*Math.sin(flap);                // wingspan breathes in and out as the wings beat
+  // right half, head to tail; 3rd value = 1 for wing points (scaled by the flap)
+  var R=[[1.1,-9.6,0],[1.4,-8.2,0],[1,-6.8,0],[1.3,-3.8,0],
+         [5,-3.4,1],[14.5,-2.4,1],[15.5,-.6,1],[11.5,-.3,1],[12.2,1.6,1],[7.5,1.4,1],
+         [2,2.6,0],[2.4,7.2,0],[1.3,8.8,0]];
+  R=R.map(function(p){return [p[0]*(p[2]?k:1),p[1]+(p[2]?(1-k)*3*p[0]/14:0)];});
+  var dark='rgba(2,10,5,.9)',white='#f4fff4';
+  // legs trail behind and join the tail: dark line first, white line on top so they read as outlined
+  [-.55,.55].forEach(function(lx){
+    ctx.beginPath();ctx.moveTo(lx,6);ctx.lineTo(lx,15.5);ctx.lineWidth=planeStroke;ctx.strokeStyle=dark;ctx.stroke();
+  });
+  [-.55,.55].forEach(function(lx){
+    ctx.beginPath();ctx.moveTo(lx,6);ctx.lineTo(lx,15.5);ctx.lineWidth=Math.max(.8,planeStroke-1.1);ctx.strokeStyle=white;ctx.stroke();
+  });
+  ctx.lineWidth=planeStroke;ctx.strokeStyle=dark;
+  // beak
+  ctx.beginPath();ctx.moveTo(0,-15);ctx.lineTo(.9,-10);ctx.lineTo(-.9,-10);ctx.closePath();
+  ctx.stroke();ctx.fillStyle=yellowStorkBeak?'#e2b33d':white;ctx.fill();
+  // head, neck, wings, tail as one polygon
+  ctx.beginPath();ctx.moveTo(0,-10.4);
+  R.forEach(function(p){ctx.lineTo(p[0],p[1]);});
+  ctx.lineTo(0,8);
+  for(var i=R.length-1;i>=0;i--)ctx.lineTo(-R[i][0],R[i][1]);
+  ctx.closePath();ctx.stroke();ctx.fillStyle=white;ctx.fill();
   ctx.restore();
 }
 function train(x,y,a){
+  // Top-down bullet-train head in the same flat style and outline weight as plane().
   ctx.save();ctx.translate(x*sc,y*sc);ctx.rotate(a);var s=.7*dpr;ctx.scale(s,s);
-  ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=2.5;ctx.strokeStyle='rgba(2,10,5,.9)';ctx.fillStyle='#f4fff4';
-  ctx.beginPath();ctx.moveTo(-3,10);ctx.lineTo(-3,-3);ctx.lineTo(-2.5,-7);ctx.lineTo(-1.2,-10.5);ctx.quadraticCurveTo(0,-12.5,1.2,-10.5);ctx.lineTo(2.5,-7);ctx.lineTo(3,-3);ctx.lineTo(3,10);ctx.closePath();ctx.stroke();ctx.fill();
-  ctx.beginPath();ctx.moveTo(-1.6,-4.5);ctx.lineTo(1.6,-4.5);ctx.stroke();
+  var dark='rgba(2,10,5,.9)',white='#f4fff4';
+  ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=2.5;ctx.strokeStyle=dark;ctx.fillStyle=white;
+  [-1,1].forEach(function(d){                                   // mirrors, drawn first so the body covers their root
+    ctx.beginPath();ctx.moveTo(d*2.7,-7.4);ctx.lineTo(d*5,-6.6);ctx.lineTo(d*5,-5.2);ctx.lineTo(d*2.7,-5);ctx.closePath();ctx.stroke();ctx.fill();
+  });
+  ctx.beginPath();                                              // head: needle nose swelling into a straight roof
+  ctx.moveTo(0,-16);ctx.lineTo(.9,-14);ctx.lineTo(2,-10.8);ctx.lineTo(2.8,-7);ctx.lineTo(3,-3.6);ctx.lineTo(3,8);
+  ctx.lineTo(-3,8);ctx.lineTo(-3,-3.6);ctx.lineTo(-2.8,-7);ctx.lineTo(-2,-10.8);ctx.lineTo(-.9,-14);
+  ctx.closePath();ctx.stroke();ctx.fill();
+  ctx.fillStyle=dark;                                           // cab glass (swept visor) and pantograph
+  ctx.beginPath();ctx.moveTo(0,-11.8);ctx.lineTo(1.9,-8.2);ctx.lineTo(1.5,-6.6);ctx.lineTo(0,-7.6);ctx.lineTo(-1.5,-6.6);ctx.lineTo(-1.9,-8.2);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(0,-.2);ctx.lineTo(1.5,1.8);ctx.lineTo(0,3.8);ctx.lineTo(-1.5,1.8);ctx.closePath();ctx.fill();
   ctx.restore();
 }
 function countryFill(country,color,alpha){
-  var index={fr:0,be:2,it:3,dz:6}[country],poly=index===undefined?wcCountryShapes[country]:hl[index];if(!poly)return;
+  var index={fr:0,be:2,it:3,dz:6}[country],poly=hl[index];if(!poly)return;
   ctx.save();ctx.beginPath();land.forEach(function(poly){poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();});ctx.clip();
   ctx.beginPath();poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.fill();ctx.restore();
 }
 function countryHatch(country){
-  var index={fr:0,be:2,it:3,dz:6}[country],poly=index===undefined?wcCountryShapes[country]:hl[index];if(!poly)return;
+  var index={fr:0,be:2,it:3,dz:6}[country],poly=hl[index];if(!poly)return;
   ctx.save();ctx.beginPath();land.forEach(function(shape){shape.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();});ctx.clip();
   ctx.beginPath();poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();ctx.clip();
   ctx.globalAlpha=.95;ctx.fillStyle=hatchPattern;ctx.fillRect(0,0,cv.width,cv.height);ctx.restore();
@@ -228,21 +246,23 @@ function frame(now){
     else year=Math.min(YR[1],YR[0]+Math.floor((YR[1]-YR[0])*(tm-birthEventDuration)/(dwellT(0)-birthEventDuration)));
   }
   else if(leg===1&&phase==='dwell'){
-    if(tm<2.8)year=1991+Math.floor(tm/2.8*12);
-    else if(tm<6.8)year=2003;
-    else year=Math.min(2013,2004+Math.floor((tm-6.8)/.2));
+    var E=EVENT_SECONDS,t1=.6;                                  // 1991 -> Black Decade (1992-2002) -> earthquake (2003) -> 2013
+    if(tm<t1)year=1991;
+    else if(tm<t1+E)year=1992+Math.min(10,Math.floor((tm-t1)/E*11));
+    else if(tm<t1+2*E)year=2003;
+    else year=Math.min(2013,2004+Math.floor((tm-t1-2*E)/.2));
   }
   else if(leg===6&&phase==='dwell'){
     if(tm<1.6)year=2018+Math.floor(tm/1.6*2);
-    else if(tm<4.7)year=2020;
-    else year=Math.min(2026,2021+Math.floor((tm-4.7)/.4));
+    else if(tm<1.6+EVENT_SECONDS){var u=(tm-1.6)/EVENT_SECONDS;   // COVID (2020-2023): 2020 gets half the time (cancelled Madrid trip)
+      year=u<.5?2020:2021+Math.min(2,Math.floor((u-.5)/.5*3));}
+    else year=Math.min(2026,2024+Math.floor((tm-1.6-EVENT_SECONDS)/.4));
   }else year=leg<n-1?Math.min(YR[leg+1],Math.floor(YR[leg]+(YR[leg+1]-YR[leg])*Math.min(1,tm/(dwellT(leg)*.8)))):YR[leg];
   var showBirthYear=!(leg===0&&phase==='dwell'&&birthElapsed<birthLandingTime);
   if(year!==previousYear||showBirthYear!==lastBirthYearVisible){dirty=1;lastBirthYearVisible=showBirthYear;}
   if(year===2003&&!quakeStart){quakeStart=now;quakeRipples=0;}
   if(year!==2003){quakeStart=0;quakeRipples=0;}
-  if(year===2003){var quakeAge=now-quakeStart;while(quakeAge<4000&&quakeAge>=quakeRipples*400){ring(pts[1],'#9b6b3e');quakeRipples++;}}
-  worldCupEvents.forEach(function(e){if(!e.fired&&year===e.year){e.fired=true;worldCupActive.push({year:e.year,country:e.country,territory:e.territory,p:e.p.slice(),t:0,goldT:0});}});
+  if(year===2003){var quakeAge=now-quakeStart;while(quakeAge<EVENT_SECONDS*1000&&quakeAge>=quakeRipples*400){ring(pts[1],'#9b6b3e');quakeRipples++;}}
   while(phase==='dwell'&&reached<MS.length&&leg===MS[reached][2]&&year>=MS[reached][0]){levelUp(MS[reached][1],pos,reached,MS[reached][3]);reached++;dirty=1;}
 
   // Map
@@ -256,13 +276,32 @@ function frame(now){
     if(country===targetCountry&&!reachedCountry){countryFill(country,'#5dff8a',.07+.12*(.5+.5*Math.sin(now/180)));return;}
     if(reachedCountry)countryFill(country,'#2fcf55',.28);
   });
-  worldCupActive.forEach(function(e){var fade=Math.max(0,1-e.goldT/2.6);countryFill(e.territory,'#f4d03f',.7*fade*fade);});
   if(year===2003)countryFill('dz','#3d2417',.76);
   var algeriaWarYears=year>=1992&&year<=2002;
   algeriaLink.classList.toggle('active',algeriaWarYears);
   earthquakeLink.classList.toggle('active',year===2003);
   covidLink.classList.toggle('active',year>=2020&&year<=2023);
   if(algeriaWarYears){countryFill('dz','#000000',.62);countryHatch('dz');}
+  // Event tints sit directly on the map so routes, labels and vehicles stay crisp above them
+  if(year>=2020&&year<=2023){
+    var covidRed='#ff334f',covidFlash=.12+.12*(.5+.5*Math.sin(now/300));
+    ctx.fillStyle='rgba(255,51,79,'+covidFlash+')';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle=covidRed;ctx.lineWidth=2*dpr;ctx.strokeRect(dpr,dpr,cv.width-2*dpr,cv.height-2*dpr);
+    if(covidSymbolsW!==cv.width||covidSymbolsH!==cv.height){
+      covidSymbolsW=cv.width;covidSymbolsH=cv.height;covidSymbols=[];
+      var seed=(cv.width*73856093^cv.height*19349663)>>>0;
+      function covidRand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
+      var symbolCount=Math.ceil(cv.width*cv.height/(68*58*dpr*dpr));
+      for(var ci=0;ci<symbolCount;ci++)covidSymbols.push({x:(26+covidRand()*Math.max(1,cv.width/dpr-52))*dpr,y:(26+covidRand()*Math.max(1,cv.height/dpr-52))*dpr,alpha:.2+covidRand()*.1});
+    }
+    ctx.save();ctx.fillStyle=covidRed;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(17*dpr)+'px sans-serif';
+    covidSymbols.forEach(function(symbol){ctx.globalAlpha=symbol.alpha;ctx.fillText('\u2623',symbol.x,symbol.y);});
+    ctx.restore();
+  }
+  if(quakeActive){
+    ctx.fillStyle='rgba(43,25,14,.38)';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle='#50321e';ctx.lineWidth=2*dpr;ctx.strokeRect(dpr,dpr,cv.width-2*dpr,cv.height-2*dpr);
+  }
   ctx.lineCap='round';ctx.lineJoin='round';
   for(var i=0;i<n-1;i++){
     if(i<leg){ctx.setLineDash([]);ctx.lineWidth=1.6*dpr;ctx.strokeStyle='#1a7a36';stroke(i,0,1);}
@@ -272,105 +311,78 @@ function frame(now){
     }
   }
   ctx.setLineDash([]);
-  var bl=Math.floor(now/350)%2,seen={},sq=7*dpr;
-  stops.forEach(function(s,i){
-    var cur=(phase!=='fly'&&i===leg)||(phase==='fly'&&i===leg+1),st=cur?2:i<=leg?1:0,k=s[1]+','+s[2];
-    seen[k]=Math.max(seen[k]||0,st);
-    if(i===n-1||stops.every(function(o,j){return j<=i||o[1]+','+o[2]!==k;})){
-      var p=pts[i],x=Math.round(p[0]*sc-sq/2),y=Math.round(p[1]*sc-sq/2),v=seen[k];
-      ctx.globalAlpha=v===2&&!bl?.4:1;
-      if(v){ctx.fillStyle=v===2?'#5dff8a':'#2fcf55';ctx.fillRect(x,y,sq,sq);}
-      
-      ctx.globalAlpha=1;
-    }
-  });
-  rings=rings.filter(function(r){r.t+=dt;return r.t<1.2;});
-  rings.forEach(function(r){ctx.globalAlpha=(1-r.t/1.2)*.8;ctx.strokeStyle=r.color;ctx.lineWidth=dpr;
-    ctx.beginPath();ctx.arc(r.x*sc,r.y*sc,Math.max(0,r.t*60*dpr),0,6.283);ctx.stroke();});
-  trail.forEach(function(p,i){ctx.globalAlpha=i/trail.length*.8;ctx.fillStyle='#5dff8a';ctx.fillRect(p[0]*sc-dpr*.75,p[1]*sc-dpr*.75,1.5*dpr,1.5*dpr);});
-  ctx.globalAlpha=1;
-  parts=parts.filter(function(p){p.l-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=30*dt;return p.l>0;});
-  parts.forEach(function(p){ctx.fillStyle=PC[p.c];var z=(p.c?1.5:2.5)*dpr;ctx.fillRect(p.x*sc,p.y*sc,z,z);});
-
-  // Labels
-  var targetStop=stops[phase==='fly'?leg+1:leg];
-  LB.forEach(function(L){
-    var p=pts[L[0]],stop=stops[L[0]],selected=L[0]<=leg||(stop[1]===targetStop[1]&&stop[2]===targetStop[2]);
-    if(!selected)return;
-    ctx.font='500 '+(11*dpr)+"px 'IBM Plex Mono', monospace";
-    if('letterSpacing' in ctx)ctx.letterSpacing=1.2*dpr+'px';
-    ctx.fillStyle='#a9d9b5';ctx.textAlign=L[3]?'right':'left';
-    mapLabel(stops[L[0]][0].toUpperCase(),p[0]*sc+L[1]*dpr,p[1]*sc+L[2]*dpr);
-  });
-  ctx.font='500 '+(7*dpr)+"px 'IBM Plex Mono', monospace";ctx.fillStyle='#5f8f6c';ctx.globalAlpha=.78;
-  capitals.forEach(function(C){var p=P(C[1],C[2]),x=p[0]*sc,y=p[1]*sc,routeLabelActive=LB.some(function(L){var stop=stops[L[0]];return stop[1]===C[1]&&stop[2]===C[2]&&(L[0]<=leg||(stop[1]===targetStop[1]&&stop[2]===targetStop[2]));});ctx.beginPath();ctx.arc(x,y,1.4*dpr,0,6.283);ctx.fill();if(routeLabelActive)return;ctx.textAlign=C[5]?'right':'left';mapLabel(C[0],x+C[3]*dpr,y+C[4]*dpr);});
-  microstateCapitals.forEach(function(C){var p=P(C[2],C[3]),x=p[0]*sc,y=p[1]*sc,size=2.4*dpr;ctx.beginPath();ctx.moveTo(x,y-size);ctx.lineTo(x+size,y);ctx.lineTo(x,y+size);ctx.lineTo(x-size,y);ctx.closePath();ctx.strokeStyle='#a9d9b5';ctx.stroke();if(C[1]){ctx.textAlign=C[6]?'right':'left';mapLabel(C[1],x+C[4]*dpr,y+C[5]*dpr);}});
-  ctx.globalAlpha=1;
-  stops.forEach(function(s,i){var key=s[1]+','+s[2],v=seen[key]||0;if(v&&(!stops.slice(0,i).some(function(o){return o[1]+','+o[2]===key;}))){var p=pts[i];ctx.globalAlpha=1;ctx.fillStyle=v===2?'#5dff8a':'#2fcf55';ctx.fillRect(Math.round(p[0]*sc-sq/2),Math.round(p[1]*sc-sq/2),sq,sq);}});
-  ctx.globalAlpha=1;
-  ctx.globalAlpha=1;
-  ctx.font='500 '+(11*dpr)+"px 'IBM Plex Mono', monospace";if('letterSpacing' in ctx)ctx.letterSpacing=1.2*dpr+'px';
-  if(showBirthYear){ctx.textAlign='left';ctx.fillStyle='#5dff8a';ctx.fillText(String(year),pos[0]*sc+14*dpr,pos[1]*sc-12*dpr);}
-
+  // Cancelled Madrid flight belongs to the route layer, below every label
   if(year===2020&&tm<3.2){
     var paris=P(2.35,48.86),madrid=P(-3.70,40.42);
     var px=paris[0]*sc,py=paris[1]*sc,mx=madrid[0]*sc,my=madrid[1]*sc,cx=(px+mx)/2,cy=(py+my)/2-58*dpr;
     ctx.save();ctx.globalAlpha=.3+.7*(.5+.5*Math.sin(now/170));ctx.strokeStyle='#ff4055';ctx.lineWidth=1.5*dpr;ctx.setLineDash([4*dpr,3*dpr]);ctx.beginPath();ctx.moveTo(px,py);ctx.quadraticCurveTo(cx,cy,mx,my);ctx.stroke();ctx.setLineDash([]);
     var crossX=(px+2*cx+mx)/4,crossY=(py+2*cy+my)/4;ctx.lineWidth=2*dpr;ctx.beginPath();ctx.moveTo(crossX-5*dpr,crossY-5*dpr);ctx.lineTo(crossX+5*dpr,crossY+5*dpr);ctx.moveTo(crossX+5*dpr,crossY-5*dpr);ctx.lineTo(crossX-5*dpr,crossY+5*dpr);ctx.stroke();ctx.restore();
   }
-  if(year>=2020&&year<=2023){
-    var covidFlash=.18+.14*(.5+.5*Math.sin(now/240));
-    ctx.fillStyle='rgba(255,45,58,'+covidFlash+')';ctx.fillRect(0,0,cv.width,cv.height);
-    ctx.strokeStyle='#ff4055';ctx.lineWidth=2*dpr;ctx.strokeRect(dpr,dpr,cv.width-2*dpr,cv.height-2*dpr);
-    ctx.save();ctx.fillStyle='#ff4055';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(36*dpr)+'px sans-serif';ctx.fillText('\u2623',28*dpr,28*dpr);
-    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='rgba(22,5,8,.95)';ctx.strokeText('COVID-19 GLOBAL PANDEMIC',56*dpr,29*dpr);ctx.fillStyle='#ff4055';ctx.fillText('COVID-19 GLOBAL PANDEMIC',56*dpr,29*dpr);ctx.restore();
+  var seen={},sq=7*dpr;
+  stops.forEach(function(s,i){var cur=(phase!=='fly'&&i===leg)||(phase==='fly'&&i===leg+1),st=cur?2:i<=leg?1:0,k=s[1]+','+s[2];seen[k]=Math.max(seen[k]||0,st);});
+  // Ground ripples
+  rings=rings.filter(function(r){r.t+=dt;return r.t<1.2;});
+  rings.forEach(function(r){ctx.globalAlpha=(1-r.t/1.2)*.8;ctx.strokeStyle=r.color;ctx.lineWidth=dpr;
+    ctx.beginPath();ctx.arc(r.x*sc,r.y*sc,Math.max(0,r.t*60*dpr),0,6.283);ctx.stroke();});
+  var targetStop=stops[phase==='fly'?leg+1:leg];
+  // Layer order, bottom to top: dim capitals, route city labels, stop markers, trail + sparks, year, stork/egg, vehicle, event banners
+  ctx.font='500 '+(7*dpr)+"px 'IBM Plex Mono', monospace";ctx.fillStyle='#5f8f6c';ctx.globalAlpha=.78;
+  capitals.forEach(function(C){var p=P(C[1],C[2]),x=p[0]*sc,y=p[1]*sc,routeLabelActive=LB.some(function(L){var stop=stops[L[0]];return stop[1]===C[1]&&stop[2]===C[2]&&(L[0]<=leg||(stop[1]===targetStop[1]&&stop[2]===targetStop[2]));});ctx.beginPath();ctx.arc(x,y,1.4*dpr,0,6.283);ctx.fill();if(routeLabelActive)return;ctx.textAlign=C[5]?'right':'left';mapLabel(C[0],x+C[3]*dpr,y+C[4]*dpr);});
+  microstateCapitals.forEach(function(C){var p=P(C[2],C[3]),x=p[0]*sc,y=p[1]*sc,size=2.4*dpr;ctx.beginPath();ctx.moveTo(x,y-size);ctx.lineTo(x+size,y);ctx.lineTo(x,y+size);ctx.lineTo(x-size,y);ctx.closePath();ctx.strokeStyle='#a9d9b5';ctx.stroke();if(C[1]){ctx.textAlign=C[6]?'right':'left';mapLabel(C[1],x+C[4]*dpr,y+C[5]*dpr);}});
+  ctx.globalAlpha=1;
+  // Labels
+  var labelRects=[],flying=phase==='fly',vx0=pos[0]*sc,vy0=pos[1]*sc;
+  LB.forEach(function(L){
+    var p=pts[L[0]],stop=stops[L[0]],selected=L[0]<=leg||(stop[1]===targetStop[1]&&stop[2]===targetStop[2]);
+    if(!selected)return;
+    ctx.font='500 '+(11*dpr)+"px 'IBM Plex Mono', monospace";
+    if('letterSpacing' in ctx)ctx.letterSpacing=1.2*dpr+'px';
+    ctx.fillStyle='#a9d9b5';ctx.textAlign=L[3]?'right':'left';
+    var txt=stop[0].toUpperCase(),x=p[0]*sc+L[1]*dpr,y=p[1]*sc+L[2]*dpr,w=ctx.measureText(txt).width,
+        r={l:(L[3]?x-w:x)-3*dpr,r:(L[3]?x:x+w)+3*dpr,t:y-10*dpr,b:y+4*dpr};
+    labelRects.push(r);
+    // a label that the plane or train is passing over steps back instead of competing with it
+    var nx=Math.max(r.l,Math.min(vx0,r.r)),ny=Math.max(r.t,Math.min(vy0,r.b));
+    ctx.globalAlpha=flying&&Math.hypot(nx-vx0,ny-vy0)<12*dpr?.25:1;
+    mapLabel(txt,x,y);
+    ctx.globalAlpha=1;
+  });
+  stops.forEach(function(s,i){var key=s[1]+','+s[2],v=seen[key]||0;if(v&&(!stops.slice(0,i).some(function(o){return o[1]+','+o[2]===key;}))){var p=pts[i];ctx.globalAlpha=1;ctx.fillStyle=v===2?'#5dff8a':'#2fcf55';ctx.fillRect(Math.round(p[0]*sc-sq/2),Math.round(p[1]*sc-sq/2),sq,sq);}});
+  ctx.globalAlpha=1;
+  trail.forEach(function(p,i){ctx.globalAlpha=i/trail.length*.8;ctx.fillStyle='#5dff8a';ctx.fillRect(p[0]*sc-dpr*.75,p[1]*sc-dpr*.75,1.5*dpr,1.5*dpr);});
+  ctx.globalAlpha=1;
+  parts=parts.filter(function(p){p.l-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=30*dt;return p.l>0;});
+  parts.forEach(function(p){ctx.fillStyle=PC[p.c];var z=(p.c?1.5:2.5)*dpr;ctx.fillRect(p.x*sc,p.y*sc,z,z);});
+  ctx.font='500 '+(11*dpr)+"px 'IBM Plex Mono', monospace";if('letterSpacing' in ctx)ctx.letterSpacing=1.2*dpr+'px';
+  if(showBirthYear){
+    // year tag follows the vehicle; it only moves to another side while parked, never during a flight
+    var ytxt=String(year),yw=ctx.measureText(ytxt).width,ycand=[[14,-12,0],[14,22,0],[-14,-12,1],[-14,22,1]];
+    var yrect=function(c){var x=vx0+c[0]*dpr,y=vy0+c[1]*dpr;return {l:(c[2]?x-yw:x)-3*dpr,r:(c[2]?x:x+yw)+3*dpr,t:y-10*dpr,b:y+4*dpr};};
+    var yhit=function(r){return labelRects.some(function(q){return r.l<q.r&&r.r>q.l&&r.t<q.b&&r.b>q.t;});};
+    if(!flying&&yhit(yrect(ycand[yearSide])))for(var yc=0;yc<4;yc++)if(!yhit(yrect(ycand[yc]))){yearSide=yc;break;}
+    var ys=ycand[yearSide];ctx.textAlign=ys[2]?'right':'left';ctx.fillStyle='#5dff8a';mapLabel(ytxt,vx0+ys[0]*dpr,vy0+ys[1]*dpr);
   }
-
-  if(quakeActive){
-    ctx.fillStyle='rgba(43,25,14,.38)';ctx.fillRect(0,0,cv.width,cv.height);
-    ctx.strokeStyle='#50321e';ctx.lineWidth=2*dpr;ctx.strokeRect(dpr,dpr,cv.width-2*dpr,cv.height-2*dpr);
-    ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
-    ctx.strokeStyle='#21180f';ctx.lineWidth=4*dpr;
-    ctx.beginPath();ctx.moveTo(13*dpr,15*dpr);ctx.lineTo(22*dpr,15*dpr);ctx.lineTo(26*dpr,8*dpr);ctx.lineTo(31*dpr,35*dpr);ctx.lineTo(36*dpr,18*dpr);ctx.lineTo(42*dpr,18*dpr);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(17*dpr,40*dpr);ctx.lineTo(23*dpr,35*dpr);ctx.lineTo(27*dpr,41*dpr);ctx.lineTo(32*dpr,36*dpr);ctx.lineTo(38*dpr,41*dpr);ctx.stroke();
-    ctx.strokeStyle='#9b6b3e';ctx.lineWidth=2*dpr;
-    ctx.beginPath();ctx.moveTo(13*dpr,15*dpr);ctx.lineTo(22*dpr,15*dpr);ctx.lineTo(26*dpr,8*dpr);ctx.lineTo(31*dpr,35*dpr);ctx.lineTo(36*dpr,18*dpr);ctx.lineTo(42*dpr,18*dpr);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(17*dpr,40*dpr);ctx.lineTo(23*dpr,35*dpr);ctx.lineTo(27*dpr,41*dpr);ctx.lineTo(32*dpr,36*dpr);ctx.lineTo(38*dpr,41*dpr);ctx.stroke();
-    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='#160d08';ctx.strokeText('BOUMERDÈS 2003 EARTHQUAKE',54*dpr,29*dpr);ctx.fillStyle='#9b6b3e';ctx.fillText('BOUMERDÈS 2003 EARTHQUAKE',54*dpr,29*dpr);
-    ctx.restore();
-  }
-
-  if(algeriaWarYears){
-    ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(34*dpr)+'px sans-serif';ctx.lineWidth=1.5*dpr;ctx.strokeStyle='#a9d9b5';ctx.strokeText('\u2620',28*dpr,28*dpr);ctx.fillStyle='#030a05';ctx.fillText('\u2620',28*dpr,28*dpr);
-    ctx.textAlign='left';ctx.font='700 '+(12*dpr)+"px 'IBM Plex Mono', monospace";ctx.lineWidth=3*dpr;ctx.strokeStyle='#a9d9b5';ctx.strokeText('ALGERIAN BLACK DECADE',56*dpr,29*dpr);ctx.fillStyle='#030a05';ctx.fillText('ALGERIAN BLACK DECADE',56*dpr,29*dpr);ctx.restore();
-  }
-
+  // Stork and egg
   if(birthElapsed<birthEventDuration){
-    var birdStart=birthStartX,approach=Math.min(1,birthElapsed/birthFlightDuration),fadeProgress=Math.max(0,Math.min(1,(birthElapsed-birthFlightDuration)/birthFadeDuration));
-    var birdX=birdStart-(birdStart-pts[0][0])*approach-12*fadeProgress,birdY=4.2+Math.sin(now/125)*.4,eggAge=birthElapsed-birthFlightDuration;
+    // The stork releases the egg slightly east of Brussels. The egg keeps a little of the stork's westward
+    // motion (which fades as it falls) while gravity speeds up the drop, so it lands on the city on a slight diagonal.
+    var eggDrift=3,dropX=pts[0][0]+eggDrift,
+        approach=Math.min(1,birthElapsed/birthFlightDuration),
+        fadeProgress=Math.max(0,Math.min(1,(birthElapsed-birthFlightDuration)/birthFadeDuration)),
+        birdX=birthStartX-(birthStartX-dropX)*approach-12*fadeProgress,birdY=4.2+Math.sin(now/125)*.4,
+        eggAge=birthElapsed-birthFlightDuration,
+        fadeIn=Math.min(1,birthElapsed/birthFadeInDuration);fadeIn=fadeIn*fadeIn*(3-2*fadeIn);
     if(eggAge>=0&&eggAge<birthEggFallDuration){
-      var dropProgress=Math.min(1,eggAge/birthEggFallDuration);dropProgress=dropProgress*dropProgress*(3-2*dropProgress);
-      var eggY=5.5+(pts[0][1]-5.5)*dropProgress;
-      ctx.save();ctx.translate(pts[0][0]*sc,eggY*sc);ctx.rotate(-.22);ctx.beginPath();ctx.ellipse(0,0,3*dpr,4*dpr,0,0,6.283);ctx.fillStyle='#f4fff4';ctx.fill();ctx.lineWidth=dpr;ctx.strokeStyle='#07150b';ctx.stroke();ctx.restore();
+      var fall=eggAge/birthEggFallDuration,dropH=pts[0][1]-5.5,
+          eggX=dropX-eggDrift*(1-(1-fall)*(1-fall)),                // sideways motion eases out
+          eggY=5.5+dropH*fall*fall,                                 // gravity: accelerating fall
+          vx=2*eggDrift*(1-fall)/birthEggFallDuration,vy=2*dropH*fall/birthEggFallDuration;
+      ctx.save();ctx.translate(eggX*sc,eggY*sc);ctx.rotate(Math.atan2(vx,vy+8));   // egg leans along its path
+      ctx.beginPath();ctx.ellipse(0,0,2.5*dpr,3.3*dpr,0,0,6.283);ctx.fillStyle='#f4fff4';ctx.fill();ctx.lineWidth=dpr;ctx.strokeStyle='#07150b';ctx.stroke();ctx.restore();
     }
-    var fadeIn=Math.min(1,birthElapsed/birthFadeInDuration);fadeIn=fadeIn*fadeIn*(3-2*fadeIn);
     stork(birdX,birdY,now/105,fadeIn*(1-fadeProgress));
   }
-
-  worldCupActive=worldCupActive.filter(function(e){e.t+=dt;e.goldT+=dt;return e.goldT<2.6;});
-  worldCupActive.forEach(function(e){
-    if(e.t>=1.15)return;
-    var t=e.t/1.15,ease=1-Math.pow(1-t,3),alpha=t<.55?.82:.82*(1-(t-.55)/.45),x=e.p[0]*sc,y=e.p[1]*sc-25*dpr*ease;
-    ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.lineJoin='round';ctx.lineCap='round';ctx.fillStyle='#f4d03f';
-    ctx.font='500 '+(6*dpr)+"px 'IBM Plex Mono', monospace";ctx.textAlign='right';ctx.fillStyle='#ffe87a';
-    ctx.fillText(e.country,-8*dpr,-3*dpr);ctx.fillText('FIFA WORLD CUP',-8*dpr,4*dpr);ctx.fillText('CHAMPIONS '+e.year,-8*dpr,11*dpr);
-    ctx.fillStyle='#f4d03f';
-    // Slim sculptural silhouette, with a rounded crown and narrow tapered body.
-    ctx.beginPath();ctx.moveTo(-2.2*dpr,-8*dpr);ctx.quadraticCurveTo(0,-10*dpr,2.2*dpr,-8*dpr);ctx.lineTo(3.2*dpr,-5*dpr);ctx.lineTo(2*dpr,-3*dpr);ctx.lineTo(3*dpr,-1*dpr);ctx.lineTo(1.6*dpr,1*dpr);ctx.lineTo(2.6*dpr,4*dpr);ctx.lineTo(1.1*dpr,8*dpr);ctx.lineTo(1.6*dpr,10*dpr);ctx.lineTo(-1.5*dpr,10*dpr);ctx.lineTo(-.8*dpr,7*dpr);ctx.lineTo(-3*dpr,3*dpr);ctx.lineTo(-1.7*dpr,0);ctx.lineTo(-3.2*dpr,-3*dpr);ctx.lineTo(-2.6*dpr,-5*dpr);ctx.closePath();ctx.fill();
-    ctx.fillRect(-3.8*dpr,11*dpr,7.6*dpr,1.3*dpr);
-    ctx.restore();
-  });
-
+  // Vehicle
   if(phase==='fly'){
     if(leg===2||leg===5||leg===6)train(pos[0],pos[1],hdg);else plane(pos[0],pos[1],hdg);
   }else{
@@ -378,7 +390,6 @@ function frame(now){
     ctx.beginPath();ctx.arc(pos[0]*sc,pos[1]*sc,4*dpr,0,6.283);ctx.strokeStyle='rgba(244,255,244,.45)';ctx.lineWidth=dpr;ctx.stroke();
   }
   ctx.restore();
-
   // Panel
   if(dirty){
     rows.forEach(function(li,i){
