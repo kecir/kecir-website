@@ -75,6 +75,8 @@ land[4],
 land[2],land[3],
 [].concat(MAAL,[[-3,30],[7.7,30]],rev(ALTN),[[8.7,37.4],[5,37.4],[2,37.2],[-0.6,36.4],[-2.2,35.6]])
 ];
+var SP=[[-7.4,37.2],[-6.9,37.2],[-6.35,36.8],[-6.3,36.5],[-6.04,36.18],[-5.6,36],[-5.35,36.1],[-4.4,36.7],[-3,36.75],[-2.2,36.7],[-1.6,37.1],[-0.7,37.6],[-0.5,38.3],[0.2,38.7],[-0.3,39.5],[0,40],[0.8,40.7],[1.2,41.1],[2.2,41.4],[3.2,41.9],[3.3,42.3]]
+  .concat(rev(FRES),[[-3,43.4],[-3.8,43.5],[-5,43.45],[-5.7,43.6],[-7,43.55],[-8.2,43.75],[-8.9,43.2],[-9.3,42.9],[-8.9,42.4],[-8.85,41.8]],PTES);
 // State and geometry
 var cv=$('cv'),ctx=cv.getContext('2d'),sc=1,dpr=Math.min(window.devicePixelRatio||1,2),base,covidSymbolSize=30;
 var hatchTile=document.createElement('canvas');hatchTile.width=Math.ceil(16*dpr);hatchTile.height=Math.ceil(16*dpr);
@@ -318,9 +320,8 @@ function frame(now){
     if(reachedCountry)countryFill(country,'#2fcf55',.28);
   });
   if(year===2020&&covidPathFlashOn){
-    var madridTarget=[[-1.8,43.4],[-1.4,43.0],[0,42.7],[1.45,42.6],[2,42.35],[3.17,42.43],[3.3,42.3],[3.2,41.9],[2.2,41.4],[1.2,41.1],[0.8,40.7],[0,40],[-.3,39.5],[.2,38.7],[-.5,38.3],[-.7,37.6],[-1.6,37.1],[-2.2,36.7],[-3,36.75],[-4.4,36.7],[-5.35,36.1],[-6.04,36.18],[-6.3,36.5],[-6.35,36.8],[-6.9,37.2],[-7.4,37.2],[-7.4,38],[-7.3,38.4],[-7,38.9],[-7,39.7],[-6.85,40.3],[-6.9,41],[-6.2,41.5],[-6.55,41.6],[-7.2,41.95],[-8.2,42.1],[-8.87,41.87],[-8.85,41.8],[-9.3,42.9],[-8.9,43.2],[-8.2,43.75],[-7,43.55],[-5.7,43.6],[-5,43.45],[-3.8,43.5],[-3,43.4]];
     ctx.save();ctx.beginPath();land.forEach(function(shape){shape.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();});ctx.clip();
-    ctx.beginPath();madridTarget.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();
+    ctx.beginPath();SP.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();
     ctx.fillStyle='#5dff8a';ctx.globalAlpha=.19;ctx.fill();ctx.restore();
   }
   if(year===2003){countryFill('dz','#05150b',.7);countryCracks('dz');}
