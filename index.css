@@ -32,6 +32,11 @@ h2{margin:0 0 8px;font-weight:700;font-size:12px;letter-spacing:.16em;text-trans
 .milestone-section.empty{display:none}
 .panel .milestone-section h2{margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
 .map{position:relative;aspect-ratio:6/5;padding:0;overflow:hidden}
+.play-slider{position:absolute;z-index:5;right:48px;bottom:18px;width:70px;height:16px;margin:0;appearance:none;background:transparent;cursor:pointer}
+.play-slider::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:rgba(93,255,138,.42)}
+.play-slider::-moz-range-track{height:3px;border-radius:2px;background:rgba(93,255,138,.42)}
+.play-slider::-webkit-slider-thumb{appearance:none;width:11px;height:11px;margin-top:-4px;border:2px solid var(--bg);border-radius:50%;background:var(--g);box-shadow:0 0 7px rgba(93,255,138,.7)}
+.play-slider::-moz-range-thumb{width:8px;height:8px;border:2px solid var(--bg);border-radius:50%;background:var(--g);box-shadow:0 0 7px rgba(93,255,138,.7)}
 .pause-button{position:absolute;right:12px;bottom:12px;z-index:5;display:flex;align-items:center;justify-content:center;gap:4px;width:28px;height:28px;padding:0;border:0;background:transparent;color:var(--g);cursor:pointer}
 .pause-button span{display:block;width:3px;height:13px;border-radius:1px;background:currentColor}
 .pause-button.is-paused span:first-child{width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:10px solid currentColor;border-radius:0;background:transparent}

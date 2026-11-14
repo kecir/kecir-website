@@ -139,6 +139,18 @@ function dwellT(i){return i===0?4.9:i===n-1?3.5:i===1?.6+2*EVENT_SECONDS+2:i===6
 function ring(p,color){rings.push({x:p[0],y:p[1],t:0,color:color||'#5dff8a'});}
 ring(pts[0]);
 var lvl=$('lvl'),flash=$('flash'),paused=false,pauseButton=$('pauseButton');
+var playSlider=$('playSlider'),timelineStarts=[],timelineTotal=0;
+for(var ti=0;ti<n;ti++){timelineStarts[ti]=timelineTotal;timelineTotal+=dwellT(ti);if(ti<n-1)timelineTotal+=legDur(ti);}
+playSlider.addEventListener('input',function(){
+  var target=Number(playSlider.value)/1000*timelineTotal;leg=0;flown=0;
+  while(leg<n-1&&target>=timelineStarts[leg]+dwellT(leg)+legDur(leg)){flown+=legKm[leg];leg++;}
+  var local=target-timelineStarts[leg],dwell=dwellT(leg);
+  if(local<dwell){phase='dwell';tm=local;prog=0;pos=pts[leg].slice();}
+  else if(leg<n-1){phase='fly';tm=local-dwell;dur=legDur(leg);prog=Math.min(1,tm/dur);ee=prog<.5?2*prog*prog:1-Math.pow(-2*prog+2,2)/2;pos=bez(leg,ee);hdg=tang(leg,ee);}
+  else{phase='ended';tm=dwell;pos=pts[leg].slice();}
+  reached=0;while(reached<MS.length&&MS[reached][2]<=leg)reached++;
+  birthElapsed=leg===0&&phase==='dwell'?Math.min(birthEventDuration,tm):birthEventDuration;dirty=1;trail=[];rings=[];parts=[];quakeStart=0;quakeRipples=0;restart.classList.toggle('visible',phase==='ended');last=performance.now();
+});
 pauseButton.addEventListener('click',function(){paused=!paused;pauseButton.classList.toggle('is-paused',paused);pauseButton.setAttribute('aria-label',paused?'Resume animation':'Pause animation');pauseButton.title=paused?'Resume animation':'Pause animation';last=performance.now();});
 var restart=$('restart');
 var algeriaLink=$('algeriaLink');
@@ -264,6 +276,7 @@ function frame(now){
     trail.push(pos.slice());if(trail.length>22)trail.shift();
     if(prog>=1){flown+=legKm[leg];leg++;phase='dwell';tm=0;dirty=1;ring(pts[leg]);hdg=headTo(leg);}
   }
+  var timelinePosition=timelineStarts[leg]+(phase==='fly'?dwellT(leg)+tm:tm);playSlider.value=Math.round(Math.min(1,timelinePosition/timelineTotal)*1000);
   if(phase!=='fly'&&trail.length)trail.shift();
   // Time passes only on the ground: the year counts up while parked and stays frozen in flight
   if(phase==='fly')year=YR[leg+1];
