@@ -309,12 +309,20 @@ function frame(now){
   ctx.save();
   if(quakeActive){var shake=2.2*dpr*(.35+.65*Math.sin(quakeAge/150));ctx.translate(Math.sin(quakeAge/31)*shake,Math.cos(quakeAge/27)*shake);}
   ctx.drawImage(base,0,0);
+  var covidFlashStart=1.6,covidFlashEnd=3.2,covidFlashCount=5,covidFlashPeriod=(covidFlashEnd-covidFlashStart)/covidFlashCount;
+  var covidPathFlashOn=leg===6&&phase==='dwell'&&tm>=covidFlashStart&&tm<covidFlashEnd&&Math.floor((tm-covidFlashStart)/covidFlashPeriod)%2===0;
   var targetCountry=phase==='fly'?routeCountries[leg+1]:(leg===0&&phase==='dwell'?routeCountries[0]:null);
   ['fr','be','it','dz'].forEach(function(country){
     var reachedCountry=(country==='be'&&showBirthYear&&leg===0)||stops.some(function(_,i){return routeCountries[i]===country&&i<=leg&&(phase==='fly'||leg>0||phase==='ended');});
     if(country===targetCountry&&!reachedCountry){countryFill(country,'#5dff8a',.07+.12*(.5+.5*Math.sin(now/180)));return;}
     if(reachedCountry)countryFill(country,'#2fcf55',.28);
   });
+  if(year===2020&&covidPathFlashOn){
+    var madridTarget=[[-1.8,43.4],[-1.4,43.0],[0,42.7],[1.45,42.6],[2,42.35],[3.17,42.43],[3.3,42.3],[3.2,41.9],[2.2,41.4],[1.2,41.1],[0.8,40.7],[0,40],[-.3,39.5],[.2,38.7],[-.5,38.3],[-.7,37.6],[-1.6,37.1],[-2.2,36.7],[-3,36.75],[-4.4,36.7],[-5.35,36.1],[-6.04,36.18],[-6.3,36.5],[-6.35,36.8],[-6.9,37.2],[-7.4,37.2],[-7.4,38],[-7.3,38.4],[-7,38.9],[-7,39.7],[-6.85,40.3],[-6.9,41],[-6.2,41.5],[-6.55,41.6],[-7.2,41.95],[-8.2,42.1],[-8.87,41.87],[-8.85,41.8],[-9.3,42.9],[-8.9,43.2],[-8.2,43.75],[-7,43.55],[-5.7,43.6],[-5,43.45],[-3.8,43.5],[-3,43.4]];
+    ctx.save();ctx.beginPath();land.forEach(function(shape){shape.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();});ctx.clip();
+    ctx.beginPath();madridTarget.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();
+    ctx.fillStyle='#5dff8a';ctx.globalAlpha=.19;ctx.fill();ctx.restore();
+  }
   if(year===2003){countryFill('dz','#05150b',.7);countryCracks('dz');}
   var algeriaWarYears=year>=1992&&year<=2002;
   algeriaLink.classList.toggle('active',algeriaWarYears);
@@ -328,7 +336,7 @@ function frame(now){
       covidSymbolsW=cv.width;covidSymbolsH=cv.height;covidSymbols=[];
       var seed=(Date.now()^cv.width*73856093^cv.height*19349663)>>>0;
       function covidRand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
-      var step=11*dpr,size=8*dpr,radius=size*.62,margin=radius+10*dpr,firstY=margin;
+      var size=8*dpr,radius=size*.62,margin=radius+10*dpr,stepX=10*dpr,stepY=stepX*.866,firstY=margin;
       function covidFootprintOnLand(cx,cy){
         var checkRadius=radius+5*dpr;
         for(var yy=-checkRadius;yy<=checkRadius;yy+=dpr)for(var xx=-checkRadius;xx<=checkRadius;xx+=dpr)
@@ -342,11 +350,23 @@ function frame(now){
         }
         return true;
       }
-      for(var row=0,sy=firstY;sy<=cv.height-radius-margin+step;row++,sy+=step)for(var col=-2;col<cv.width/step+2;col++){
-        var sx=col*step+(row%2?step/2:0);
+      for(var row=0,sy=firstY;sy<=cv.height-radius-margin+stepY;row++,sy+=stepY)for(var col=-2;col<cv.width/stepX+2;col++){
+        var sx=col*stepX+(row%2?stepX/2:0);
         if(sx<radius+margin||sx>cv.width-radius-margin)continue;
         if(covidFootprintOnLand(sx,sy))covidSymbols.push({x:sx,y:sy,alpha:.62});
       }
+      // Add locally phased passes so narrow countries and islands are not missed by the continental grid.
+      var localRegions=[
+        [-6,50.5,2,53],[-5.8,49.8,-4.3,50.8],[-4.2,50.5,-2.5,51.8],
+        [2.4,49.4,6.5,51.6],[8.1,41.5,10,43.2],[8.3,39,10,41.3],
+        [12.1,36.5,15.8,38.4],[14.5,35.2,14.8,36.3],
+        [5.8,45.7,10.6,48.1],[10,46.5,16.5,49.5]
+      ];
+      localRegions.forEach(function(box,ri){
+        var p0=P(box[0],box[3]),p1=P(box[2],box[1]),left=Math.max(radius+margin,p0[0]*sc*dpr),right=Math.min(cv.width-radius-margin,p1[0]*sc*dpr),top=Math.max(radius+margin,p0[1]*sc*dpr),bottom=Math.min(cv.height-radius-margin,p1[1]*sc*dpr);
+        for(var ly=top+((ri%2)*stepY/2);ly<bottom;ly+=stepY)for(var lx=left+((ri%3)*stepX/3);lx<right;lx+=stepX)
+          if(covidFootprintOnLand(lx,ly)&&!covidSymbols.some(function(s){return (s.x-lx)*(s.x-lx)+(s.y-ly)*(s.y-ly)<stepX*stepX*.55;}))covidSymbols.push({x:lx,y:ly,alpha:.62});
+      });
     }
     var pathFlashActive=leg===6&&phase==='dwell'&&tm>=1.6&&tm<3.2;
     var covidPulse=pathFlashActive?.62:.4+.6*(.5+.5*Math.sin(now/150));
@@ -370,7 +390,7 @@ function frame(now){
   if(year===2020&&tm<3.2){
     var paris=P(2.35,48.86),madrid=P(-3.70,40.42);
     var px=paris[0]*sc,py=paris[1]*sc,mx=madrid[0]*sc,my=madrid[1]*sc,cx=(px+mx)/2,cy=(py+my)/2-58*dpr;
-    var covidEventStart=1.6,covidPathEnd=3.2,pathDuration=covidPathEnd-covidEventStart,flashCount=5,flashPeriod=pathDuration/flashCount,flashing=tm>=covidEventStart,flashOn=flashing&&Math.floor((tm-covidEventStart)/flashPeriod)%2===0;
+    var flashing=tm>=covidFlashStart,flashOn=covidPathFlashOn;
     ctx.save();ctx.globalAlpha=flashing?(flashOn?.55:0):.3;ctx.strokeStyle='#5dff8a';ctx.lineWidth=1.5*dpr;ctx.setLineDash([4*dpr,3*dpr]);ctx.beginPath();ctx.moveTo(px,py);ctx.quadraticCurveTo(cx,cy,mx,my);ctx.stroke();ctx.setLineDash([]);
     ctx.restore();
   }
