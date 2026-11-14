@@ -14,6 +14,26 @@ var capitals=[["LONDON",-.13,51.51,-5,-5,1],["DUBLIN",-6.26,53.35,5,-5,0],["LISB
 var n=stops.length;
 var microstateCapitals=[["ANDORRA","ANDORRA LA VELLA",1.52,42.51,-5,-7,1],["MONACO","MONACO",7.42,43.74,-5,-7,1],["VATICAN CITY","VATICAN CITY",12.45,41.90,5,-9,0],["SAN MARINO","SAN MARINO",12.46,43.94,-5,-7,1],["MALTA","",14.51,35.90,0,0,0]];
 function P(lon,lat){return [(lon+10)/26*W,(52-lat)/19*H];}
+function geoCircle(lon,lat,radiusKm,startBearing,endBearing){
+  var points=[],r=Math.PI/180,delta=radiusKm/6371,phi1=lat*r,lambda1=lon*r;
+  startBearing=startBearing===undefined?0:startBearing;
+  endBearing=endBearing===undefined?360:endBearing;
+  for(var bearing=startBearing;bearing<endBearing;bearing+=2){
+    var theta=bearing*r,phi2=Math.asin(Math.sin(phi1)*Math.cos(delta)+Math.cos(phi1)*Math.sin(delta)*Math.cos(theta));
+    var lambda2=lambda1+Math.atan2(Math.sin(theta)*Math.sin(delta)*Math.cos(phi1),Math.cos(delta)-Math.sin(phi1)*Math.sin(phi2));
+    points.push(P(lambda2/r,phi2/r));
+  }
+  return points;
+}
+function roughenCircle(points,center,amount){
+  var seed=17031,noise=[];
+  for(var i=0;i<points.length;i++){seed=seed*48271%2147483647;noise.push(seed/2147483647*2-1);}
+  return points.map(function(p,i){
+    var n=noise.length,variation=(noise[(i+n-2)%n]+2*noise[(i+n-1)%n]+3*noise[i]+2*noise[(i+1)%n]+noise[(i+2)%n])/9;
+    var scale=1+variation*amount;
+    return [center[0]+(p[0]-center[0])*scale,center[1]+(p[1]-center[1])*scale];
+  });
+}
 function pointInLand(x,y){
   var lon=x/W*26-10,lat=52-y/H*19,inside=false;
   for(var pi=0;pi<land.length;pi++){
@@ -77,6 +97,13 @@ land[2],land[3],
 ];
 var SP=[[-7.4,37.2],[-6.9,37.2],[-6.35,36.8],[-6.3,36.5],[-6.04,36.18],[-5.6,36],[-5.35,36.1],[-4.4,36.7],[-3,36.75],[-2.2,36.7],[-1.6,37.1],[-0.7,37.6],[-0.5,38.3],[0.2,38.7],[-0.3,39.5],[0,40],[0.8,40.7],[1.2,41.1],[2.2,41.4],[3.2,41.9],[3.3,42.3]]
   .concat(rev(FRES),[[-3,43.4],[-3.8,43.5],[-5,43.45],[-5.7,43.6],[-7,43.55],[-8.2,43.75],[-8.9,43.2],[-9.3,42.9],[-8.9,42.4],[-8.85,41.8]],PTES);
+var blackDecadeStart=.6,blackDecadeRevealDuration=1.4,algeriaRevealCenter=P(3.06,36.75),algeriaRevealRadius=0;
+hl[6].forEach(function(p){var q=P(p[0],p[1]),dx=q[0]-algeriaRevealCenter[0],dy=q[1]-algeriaRevealCenter[1];algeriaRevealRadius=Math.max(algeriaRevealRadius,Math.sqrt(dx*dx+dy*dy));});
+var quakeCenter=[3.47,36.76],tsunamiReachKm=680,quakeImpactReachKm=300;
+var algeriaNorthCoast=land[2].slice(12,23); // Mediterranean coastline segment around Algeria
+var quakeImpactCenter=P(quakeCenter[0],quakeCenter[1]),quakeImpactArea=roughenCircle(geoCircle(quakeCenter[0],quakeCenter[1],quakeImpactReachKm),quakeImpactCenter,.08);
+var quakeImpactOuterRadius=0;
+quakeImpactArea.forEach(function(p){var dx=p[0]-quakeImpactCenter[0],dy=p[1]-quakeImpactCenter[1];quakeImpactOuterRadius=Math.max(quakeImpactOuterRadius,Math.sqrt(dx*dx+dy*dy));});
 // State and geometry
 var cv=$('cv'),ctx=cv.getContext('2d'),sc=1,dpr=Math.min(window.devicePixelRatio||1,2),base,covidSymbolSize=30;
 var hatchTile=document.createElement('canvas');hatchTile.width=Math.ceil(16*dpr);hatchTile.height=Math.ceil(16*dpr);
@@ -252,13 +279,26 @@ function countryHatch(country){
   ctx.beginPath();poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();ctx.clip();
   ctx.globalAlpha=.95;ctx.fillStyle=hatchPattern;ctx.fillRect(0,0,cv.width,cv.height);ctx.restore();
 }
-function countryCracks(country){
+function countryCracks(country,fadeCenter,fadeRadius){
   var index={dz:6}[country],poly=hl[index];if(!poly)return;
   ctx.save();ctx.beginPath();land.forEach(function(shape){shape.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();});ctx.clip();
   ctx.beginPath();poly.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();ctx.clip();
   ctx.strokeStyle='rgba(169,217,181,.9)';ctx.lineWidth=1.2*dpr;
-  for(var y=20;y<cv.height;y+=22*dpr)for(var x=20;x<cv.width;x+=28*dpr){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+6*dpr,y+5*dpr);ctx.lineTo(x+3*dpr,y+11*dpr);ctx.lineTo(x+10*dpr,y+17*dpr);ctx.stroke();}
+  for(var y=20;y<cv.height;y+=22*dpr)for(var x=20;x<cv.width;x+=28*dpr){
+    if(fadeCenter&&fadeRadius){var dx=x+5*dpr-fadeCenter[0]*sc,dy=y+9*dpr-fadeCenter[1]*sc;ctx.globalAlpha=Math.max(0,Math.min(1,(fadeRadius*sc-Math.sqrt(dx*dx+dy*dy))/(fadeRadius*sc*.22)));}
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+6*dpr,y+5*dpr);ctx.lineTo(x+3*dpr,y+11*dpr);ctx.lineTo(x+10*dpr,y+17*dpr);ctx.stroke();
+  }
   ctx.restore();
+}
+function tsunamiRipple(points,alpha){
+  ctx.save();ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
+  land.forEach(function(shape){
+    shape.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});
+    ctx.closePath();
+  });
+  ctx.clip('evenodd');ctx.beginPath();
+  points.forEach(function(p,i){i?ctx.lineTo(p[0]*sc,p[1]*sc):ctx.moveTo(p[0]*sc,p[1]*sc);});
+  ctx.closePath();ctx.globalAlpha=.8*alpha;ctx.strokeStyle='#5dff8a';ctx.lineWidth=1.6*dpr;ctx.stroke();ctx.restore();
 }
 function mapLabel(text,x,y){ctx.lineWidth=3*dpr;ctx.lineJoin='round';ctx.strokeStyle='#05150b';ctx.strokeText(text,x,y);ctx.fillText(text,x,y);}
 function frame(now){
@@ -287,7 +327,7 @@ function frame(now){
     else year=Math.min(YR[1],YR[0]+Math.floor((YR[1]-YR[0])*(tm-birthEventDuration)/(dwellT(0)-birthEventDuration)));
   }
   else if(leg===1&&phase==='dwell'){
-    var E=EVENT_SECONDS,t1=.6;                                  // 1991 -> Black Decade (1992-2002) -> earthquake (2003) -> 2013
+    var E=EVENT_SECONDS,t1=blackDecadeStart;                    // 1991 -> Black Decade (1992-2002) -> earthquake (2003) -> 2013
     if(tm<t1)year=1991;
     else if(tm<t1+E)year=1992+Math.min(10,Math.floor((tm-t1)/E*11));
     else if(tm<t1+2*E)year=2003;
@@ -324,12 +364,35 @@ function frame(now){
     ctx.beginPath();SP.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});ctx.closePath();
     ctx.fillStyle='#5dff8a';ctx.globalAlpha=.19;ctx.fill();ctx.restore();
   }
-  if(year===2003){countryFill('dz','#05150b',.7);countryCracks('dz');}
+  if(year===2003){
+    var tsunamiElapsed=tm-(blackDecadeStart+EVENT_SECONDS),tsunamiTravelDuration=EVENT_SECONDS*.9;
+    var tsunamiProgress=Math.min(1,tsunamiElapsed/tsunamiTravelDuration);
+    var tsunamiFade=tsunamiElapsed>tsunamiTravelDuration?Math.max(0,1-(tsunamiElapsed-tsunamiTravelDuration)/(EVENT_SECONDS-tsunamiTravelDuration)):1;
+    var patternProgress=Math.min(1,tsunamiProgress*tsunamiReachKm/quakeImpactReachKm);
+    var quakeGradient=ctx.createRadialGradient(quakeImpactCenter[0]*sc,quakeImpactCenter[1]*sc,0,quakeImpactCenter[0]*sc,quakeImpactCenter[1]*sc,quakeImpactOuterRadius*sc);
+    quakeGradient.addColorStop(0,'rgba(5,21,11,.78)');quakeGradient.addColorStop(.78,'rgba(5,21,11,.78)');quakeGradient.addColorStop(1,'rgba(5,21,11,0)');
+    ctx.save();ctx.beginPath();
+    quakeImpactArea.forEach(function(p,i){i?ctx.lineTo(p[0]*sc,p[1]*sc):ctx.moveTo(p[0]*sc,p[1]*sc);});ctx.closePath();ctx.clip();
+    if(patternProgress>0){
+      ctx.save();ctx.beginPath();ctx.arc(quakeImpactCenter[0]*sc,quakeImpactCenter[1]*sc,quakeImpactOuterRadius*sc*patternProgress,0,Math.PI*2);ctx.clip();
+      countryFill('dz',quakeGradient,1);
+      countryCracks('dz',quakeImpactCenter,quakeImpactOuterRadius);ctx.restore();
+    }
+    ctx.restore();
+    if(tsunamiProgress>0)tsunamiRipple(geoCircle(quakeCenter[0],quakeCenter[1],tsunamiReachKm*tsunamiProgress),tsunamiFade);
+    ctx.save();ctx.beginPath();algeriaNorthCoast.forEach(function(p,i){var q=P(p[0],p[1]);i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc);});
+    ctx.strokeStyle='#23a04a';ctx.lineWidth=1.3*dpr;ctx.stroke();ctx.restore();
+  }
   var algeriaWarYears=year>=1992&&year<=2002;
   algeriaLink.classList.toggle('active',algeriaWarYears);
   earthquakeLink.classList.toggle('active',year===2003);
   covidLink.classList.toggle('active',year>=2020&&year<=2023);
-  if(algeriaWarYears){countryFill('dz','#000000',.62);countryHatch('dz');}
+  if(algeriaWarYears){
+    var revealProgress=Math.min(1,(tm-blackDecadeStart)/blackDecadeRevealDuration),revealEase=1-Math.pow(1-revealProgress,3);
+    ctx.save();
+    if(revealProgress<1){ctx.beginPath();ctx.arc(algeriaRevealCenter[0]*sc,algeriaRevealCenter[1]*sc,Math.max(2*dpr,algeriaRevealRadius*sc*revealEase),0,6.283);ctx.clip();}
+    countryFill('dz','#000000',.62);countryHatch('dz');ctx.restore();
+  }
   // Event tints sit directly on the map so routes, labels and vehicles stay crisp above them
   if(year>=2020&&year<=2023){
     var covidWhite='#ffffff';
