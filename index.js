@@ -404,11 +404,11 @@ function frame(now){
       function covidFootprintOnLand(cx,cy){
         var checkRadius=radius+5*dpr;
         for(var yy=-checkRadius;yy<=checkRadius;yy+=dpr)for(var xx=-checkRadius;xx<=checkRadius;xx+=dpr)
-          if(xx*xx+yy*yy<=checkRadius*checkRadius&&!pointInLand((cx+xx)/(dpr*sc),(cy+yy)/(dpr*sc)))return false;
+          if(xx*xx+yy*yy<=checkRadius*checkRadius&&!pointInLand((cx+xx)/sc,(cy+yy)/sc))return false;
         var borderClearance=checkRadius+2*dpr;
         for(var bi=0;bi<borders.length;bi++)for(var bp=1;bp<borders[bi].length;bp++){
           var a=P(borders[bi][bp-1][0],borders[bi][bp-1][1]),b=P(borders[bi][bp][0],borders[bi][bp][1]);
-          var ax=a[0]*sc*dpr,ay=a[1]*sc*dpr,bx=b[0]*sc*dpr,by=b[1]*sc*dpr,dx=bx-ax,dy=by-ay;
+          var ax=a[0]*sc,ay=a[1]*sc,bx=b[0]*sc,by=b[1]*sc,dx=bx-ax,dy=by-ay;
           var t=Math.max(0,Math.min(1,((cx-ax)*dx+(cy-ay)*dy)/(dx*dx+dy*dy))),ex=ax+t*dx,ey=ay+t*dy;
           if((cx-ex)*(cx-ex)+(cy-ey)*(cy-ey)<borderClearance*borderClearance)return false;
         }
@@ -427,7 +427,7 @@ function frame(now){
         [5.8,45.7,10.6,48.1],[10,46.5,16.5,49.5]
       ];
       localRegions.forEach(function(box,ri){
-        var p0=P(box[0],box[3]),p1=P(box[2],box[1]),left=Math.max(radius+margin,p0[0]*sc*dpr),right=Math.min(cv.width-radius-margin,p1[0]*sc*dpr),top=Math.max(radius+margin,p0[1]*sc*dpr),bottom=Math.min(cv.height-radius-margin,p1[1]*sc*dpr);
+        var p0=P(box[0],box[3]),p1=P(box[2],box[1]),left=Math.max(radius+margin,p0[0]*sc),right=Math.min(cv.width-radius-margin,p1[0]*sc),top=Math.max(radius+margin,p0[1]*sc),bottom=Math.min(cv.height-radius-margin,p1[1]*sc);
         for(var ly=top+((ri%2)*stepY/2);ly<bottom;ly+=stepY)for(var lx=left+((ri%3)*stepX/3);lx<right;lx+=stepX)
           if(covidFootprintOnLand(lx,ly)&&!covidSymbols.some(function(s){return (s.x-lx)*(s.x-lx)+(s.y-ly)*(s.y-ly)<stepX*stepX*.55;}))covidSymbols.push({x:lx,y:ly,alpha:.62});
       });
