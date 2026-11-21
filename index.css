@@ -101,6 +101,7 @@ li.cur .m{background:var(--g);border-color:var(--g);box-shadow:var(--glow);anima
 .footer-logos .umbb-link{position:relative;isolation:isolate}
 .footer-logos .umbb-link::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--g);mask-image:url("img/logos/umbb_wb.png");mask-mode:alpha;mask-repeat:no-repeat;mask-position:center;mask-size:contain}
 .footer-logos .umbb-logo{mix-blend-mode:multiply}
+.footer-logos a[href^="https://www.inria.fr"] img{filter:brightness(0) saturate(100%) invert(85%) sepia(31%) saturate(1134%) hue-rotate(76deg) brightness(101%) contrast(102%);opacity:.88}
 .site-footer{position:relative;max-width:1080px;margin:0 auto;padding:0 20px 24px;color:var(--mute);font-size:10px;letter-spacing:.12em;text-align:center}
 .site-footer::before{content:"";display:block;height:1px;margin:0 0 14px;background:var(--line)}
 .footer-copyright{color:var(--mute)}
