@@ -97,7 +97,7 @@ li.cur .m{background:var(--g);border-color:var(--g);box-shadow:var(--glow);anima
 .footer-logos{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:24px;max-width:1080px;margin:0 auto 12px;padding:0 20px}
 .footer-logos a{display:flex;align-items:center;justify-content:center;min-height:38px;opacity:.9;transition:opacity .2s ease}
 .footer-logos a:hover,.footer-logos a:focus-visible{opacity:1;outline:1px solid var(--g);outline-offset:4px}
-.footer-logos img{display:block;width:auto;height:34px;max-width:120px;object-fit:contain}
+.footer-logos img{display:block;width:auto;height:34px;max-width:120px;object-fit:contain;filter:brightness(0) saturate(100%) invert(85%) sepia(31%) saturate(1134%) hue-rotate(76deg) brightness(101%) contrast(102%);opacity:.88}
 .site-footer{position:relative;max-width:1080px;margin:0 auto;padding:0 20px 24px;color:var(--mute);font-size:10px;letter-spacing:.12em;text-align:center}
 .site-footer::before{content:"";display:block;height:1px;margin:0 0 14px;background:var(--line)}
 .footer-copyright{color:var(--mute)}
