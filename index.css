@@ -94,12 +94,12 @@ li.cur .m{background:var(--g);border-color:var(--g);box-shadow:var(--glow);anima
 
 #matrix{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.12}
 .wrap,.site-footer{z-index:1}
-.footer-logos{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:24px;max-width:1080px;margin:0 auto 12px;padding:0 20px}
-.footer-logos a{display:flex;align-items:center;justify-content:center;min-height:30px;opacity:.9;transition:opacity .2s ease}
+.footer-logos{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:21px;max-width:1080px;margin:0 auto 12px;padding:0 20px}
+.footer-logos a{display:flex;align-items:center;justify-content:center;min-height:26px;opacity:.9;transition:opacity .2s ease}
 .footer-logos a:hover,.footer-logos a:focus-visible{opacity:1;outline:1px solid var(--g);outline-offset:4px}
-.footer-logos img{display:block;width:auto;height:30px;max-width:105px;object-fit:contain}
+.footer-logos img{display:block;width:auto;height:26px;max-width:92px;object-fit:contain}
 .footer-logos .umbb-link{position:relative;isolation:isolate}
-.footer-logos .umbb-link::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--g);mask-image:url("img/logos/umbb_wb.png");mask-mode:alpha;mask-repeat:no-repeat;mask-position:center;mask-size:contain}
+.footer-logos .umbb-link::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--g);mask-image:url("img/logos/umbb_wb_simple.png");mask-mode:alpha;mask-repeat:no-repeat;mask-position:center;mask-size:contain}
 .footer-logos .umbb-logo{mix-blend-mode:multiply}
 .footer-logos a[href^="https://www.utoulouse.fr"] img{filter:brightness(0) saturate(100%) invert(85%) sepia(31%) saturate(1134%) hue-rotate(76deg) brightness(101%) contrast(102%);opacity:.88}
 .footer-logos a[href^="https://www.univ-rennes.fr"] img,.footer-logos a[href^="https://www.alstom.com"] img{filter:brightness(0) saturate(100%) invert(85%) sepia(31%) saturate(1134%) hue-rotate(76deg) brightness(101%) contrast(102%);opacity:.88}
@@ -107,7 +107,8 @@ li.cur .m{background:var(--g);border-color:var(--g);box-shadow:var(--glow);anima
 .site-footer{position:relative;max-width:1080px;margin:0 auto;padding:0 20px 24px;color:var(--mute);font-size:10px;letter-spacing:.12em;text-align:center}
 .site-footer::before{content:"";display:block;height:1px;margin:0 0 14px;background:var(--line)}
 .footer-copyright{color:var(--mute)}
-@media(max-width:480px){.footer-logos{gap:18px}.footer-logos img{height:24px;max-width:90px}}.restart{display:none;position:absolute;top:10px;right:10px;z-index:4;border:1px solid var(--line);padding:6px 10px;background:rgba(3,10,5,.88);color:var(--g);font:11px 'IBM Plex Mono',monospace;letter-spacing:.08em;cursor:pointer}
+@media(max-width:480px){.footer-logos{gap:16px}.footer-logos img{height:21px;max-width:78px}}
+.restart{display:none;position:absolute;top:10px;right:10px;z-index:4;border:1px solid var(--line);padding:6px 10px;background:rgba(3,10,5,.88);color:var(--g);font:11px 'IBM Plex Mono',monospace;letter-spacing:.08em;cursor:pointer}
 .restart.visible{display:block}.restart:hover,.restart:focus-visible{border-color:var(--g);box-shadow:var(--glow);outline:none}
 .algeria-link{display:none;position:absolute;left:12px;bottom:12px;z-index:6;color:#d8ffe2;font-size:11px;letter-spacing:.03em;text-decoration:underline;text-underline-offset:2px;text-shadow:0 1px 4px #030a05;white-space:nowrap}
 .algeria-link.active{display:block;animation:algeriaFlash .9s steps(2,end) infinite}
